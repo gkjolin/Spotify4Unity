@@ -13,6 +13,9 @@ public class BasicPlayerController : MonoBehaviour {
     Slider m_playingSlider;
 
     [SerializeField]
+    Slider m_volumeSlider;
+    
+    [SerializeField]
     Button m_previousBtn;
 
     [SerializeField]
@@ -34,40 +37,29 @@ public class BasicPlayerController : MonoBehaviour {
     private void Awake()
     {
         if(m_nextBtn != null)
-        {
             m_nextBtn.onClick.AddListener(OnPlayMedia);
-        }
         else
-        {
-            Debug.LogError("Unable to listen for Spotify Play. No Play button assigned!");
-        }
+            Debug.LogError("No Next button assigned!");
 
         if (m_pauseBtn != null)
-        {
             m_pauseBtn.onClick.AddListener(OnPauseMedia);
-        }
         else
-        {
-            Debug.LogError("Unable to listen for Spotify Play. No Pause button assigned!");
-        }
+            Debug.LogError("No Pause button assigned!");
+
+        if (m_playBtn != null)
+            m_playBtn.onClick.AddListener(OnPlayMedia);
+        else
+            Debug.LogError("No Play button assigned!");
 
         if (m_previousBtn != null)
-        {
             m_previousBtn.onClick.AddListener(OnPreviousMedia);
-        }
         else
-        {
-            Debug.LogError("Unable to listen for Spotify Play. No Previous (<) button assigned!");
-        }
+            Debug.LogError("No Previous (<) button assigned!");
 
         if (m_nextBtn != null)
-        {
             m_nextBtn.onClick.AddListener(OnNextMedia);
-        }
         else
-        {
-            Debug.LogError("Unable to listen for Spotify Next. No Next (>) button assigned!");
-        }
+            Debug.LogError("No Next (>) button assigned!");
     }
 
     private void Start ()
@@ -77,24 +69,33 @@ public class BasicPlayerController : MonoBehaviour {
 
     private void Update ()
     {
-        if(m_spotifyService.IsConnected)
+        if (m_spotifyService.IsConnected)
         {
-            SongInfo currentInfo = m_spotifyService.GetCurrentInfo();
-            bool isPlaying = currentInfo != null;
-            if (currentInfo != null)
+            if (m_playingSlider != null)
             {
-                m_playingSlider.value = (float)currentInfo.CurrentTime;
-                m_playingSlider.maxValue = (float)currentInfo.TotalDuration;
+                m_playingSlider.value = m_spotifyService.CurrentTrackTime;
+                m_playingSlider.maxValue = m_spotifyService.CurrentTrack.TotalTime;
 
-                m_playingText.text = $"{currentInfo.Artist} - {currentInfo.Title} - {currentInfo.AlbumName}";
+                if(m_spotifyService.Volume != null)
+                {
+                    m_volumeSlider.value = m_spotifyService.Volume.CurrentVolume;
+                    m_volumeSlider.maxValue = m_spotifyService.Volume.MaxVolume;
+                }
+
+                m_playingText.text = $"{m_spotifyService.CurrentTrack.Artist} - {m_spotifyService.CurrentTrack.Title} - {m_spotifyService.CurrentTrack.Album}";
+
+                if (m_playBtn.isActiveAndEnabled != !m_spotifyService.IsPlaying)
+                    m_playBtn.gameObject.SetActive(!m_spotifyService.IsPlaying);
+
+                if (m_pauseBtn.isActiveAndEnabled != m_spotifyService.IsPlaying)
+                    m_pauseBtn.gameObject.SetActive(m_spotifyService.IsPlaying);
             }
-
-            if (m_playBtn.isActiveAndEnabled != !isPlaying)
-                m_playBtn.gameObject.SetActive(!isPlaying);
-
-            if (m_pauseBtn.isActiveAndEnabled != isPlaying)
-                m_pauseBtn.gameObject.SetActive(isPlaying);
         }
+    }
+
+    private void OnDestroy()
+    {
+        m_spotifyService.Disconnect();
     }
     #endregion
 
@@ -105,10 +106,12 @@ public class BasicPlayerController : MonoBehaviour {
 
     private void OnNextMedia()
     {
+        m_spotifyService.NextSong();
     }
 
     private void OnPreviousMedia()
     {
+        m_spotifyService.PreviousSong();
     }
 
     private void OnPauseMedia()

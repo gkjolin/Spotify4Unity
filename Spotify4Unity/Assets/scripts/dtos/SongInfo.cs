@@ -10,4 +10,5 @@ public class SongInfo
 
     public double TotalDuration { get; set; }
     public double CurrentTime { get; set; }
+    public bool IsPlaying { get; set; }
 }

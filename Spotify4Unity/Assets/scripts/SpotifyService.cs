@@ -12,6 +12,11 @@ public class SpotifyService
     public bool IsPlaying = false;
     public bool IsConnected = false;
 
+    public Track CurrentTrack = null;
+    public float CurrentTrackTime = 0f;
+
+    public VolumeInfo Volume = null;
+
     private SpotifyLocalAPI m_spotify;
 
     public SpotifyService()
@@ -29,10 +34,10 @@ public class SpotifyService
         };
 
         m_spotify = new SpotifyLocalAPI(config);
-        m_spotify.OnPlayStateChange += OnPlayChanged;
-        m_spotify.OnTrackChange += OnTrackChanged;
-        m_spotify.OnTrackTimeChange += OnTrackTimeChanged;
-        m_spotify.OnVolumeChange += OnVolumeChanged;
+        m_spotify.OnPlayStateChange += OnPlayChangedInternal;
+        m_spotify.OnTrackChange += OnTrackChangedInternal;
+        m_spotify.OnTrackTimeChange += OnTrackTimeChangedInternal;
+        m_spotify.OnVolumeChange += OnVolumeChangedInternal;
 
         if (!SpotifyLocalAPI.IsSpotifyRunning())
         {
@@ -65,7 +70,7 @@ public class SpotifyService
 
         if (successful)
         {
-            m_spotify.ListenForEvents = true;
+            Initialize();
         }
         else
         {
@@ -74,6 +79,26 @@ public class SpotifyService
 
         IsConnected = successful;
         return successful;
+    }
+
+    public void Disconnect()
+    {
+        if (m_spotify == null)
+            return;
+
+        m_spotify.Dispose();
+
+        m_spotify.OnPlayStateChange -= OnPlayChangedInternal;
+        m_spotify.OnTrackChange -= OnTrackChangedInternal;
+        m_spotify.OnTrackTimeChange -= OnTrackTimeChangedInternal;
+        m_spotify.OnVolumeChange -= OnVolumeChangedInternal;
+
+        m_spotify = null;
+        IsConnected = false;
+        IsPlaying = false;
+        CurrentTrack = null;
+        CurrentTrackTime = 0f;
+        Volume = null;
     }
 
     public void Play()
@@ -88,9 +113,9 @@ public class SpotifyService
         IsPlaying = true;
     }
 
-    public SongInfo GetCurrentInfo()
+    public SongInfo GetSongInfo()
     {
-        var r = m_spotify.GetStatus();
+        StatusResponse r = m_spotify.GetStatus();
         if (r == null)
             return null;
 
@@ -100,29 +125,59 @@ public class SpotifyService
             Artist = r.Track.ArtistResource.Name,
             AlbumName = r.Track.AlbumResource.Name,
 
-            CurrentTime = 3,
+            IsPlaying = r.Playing,
+            CurrentTime = r.PlayingPosition,
             TotalDuration = r.Track.Length,
         };
         return info;
     }
 
-    private void OnVolumeChanged(object sender, VolumeChangeEventArgs e)
+    public void NextSong()
     {
-        
+        m_spotify.Previous();
     }
 
-    private void OnTrackTimeChanged(object sender, TrackTimeChangeEventArgs e)
+    public void PreviousSong()
     {
-        
+        m_spotify.Skip();
     }
 
-    private void OnTrackChanged(object sender, TrackChangeEventArgs e)
+    private void Initialize()
     {
-        
+        m_spotify.ListenForEvents = true;
+
+        StatusResponse status = m_spotify.GetStatus();
+        CurrentTrack = new Track(status.Track);
+        IsPlaying = status.Playing;
+        Volume = new VolumeInfo()
+        {
+            CurrentVolume = (float)status.Volume,
+            MaxVolume = 1f,
+        };
     }
 
-    private void OnPlayChanged(object sender, PlayStateEventArgs e)
+    private void OnVolumeChangedInternal(object sender, VolumeChangeEventArgs e)
     {
-        
+        Volume = new VolumeInfo()
+        {
+            CurrentVolume = (float)e.NewVolume,
+            OldVolume = (float)e.OldVolume,
+            MaxVolume = 1f,
+        };
+    }
+
+    private void OnTrackTimeChangedInternal(object sender, TrackTimeChangeEventArgs e)
+    {
+        CurrentTrackTime = (float)e.TrackTime;
+    }
+
+    private void OnTrackChangedInternal(object sender, TrackChangeEventArgs e)
+    {
+        CurrentTrack = new Track(e.NewTrack);
+    }
+
+    private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)
+    {
+        IsPlaying = e.Playing;
     }
 }
