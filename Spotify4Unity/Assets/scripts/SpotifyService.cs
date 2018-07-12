@@ -173,6 +173,35 @@ public class SpotifyService
         */
     }
 
+    /// <summary>
+    /// Move the current track position using the total seconds
+    /// </summary>
+    /// <param name="totalSeconds">The total seconds to move the track position to</param>
+    public void SetTrackPosition(float totalSeconds)
+    {
+        if (totalSeconds > CurrentTrack.TotalTime)
+        {
+            Debug.LogError("Can't set current track position since given number is higher than track time!");
+            return;
+        }
+
+        int minutes = (int)totalSeconds / 60;
+        int seconds = (int)totalSeconds % 60;
+        SetTrackPosition(minutes, seconds);
+    }
+
+    /// <summary>
+    /// Move the current track position using minutes and seconds
+    /// </summary>
+    /// <param name="minutes">The amount of minutes into the track to move to</param>
+    /// <param name="seconds">The amount of seconds into the track to move to</param>
+    public void SetTrackPosition(int minutes, int seconds)
+    {
+        //Requires an encoded # inbetween URI and minutes & seconds
+        string hash = "%23";
+        m_spotify.PlayURL(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
+    }
+
     public SongInfo GetSongInfo()
     {
         StatusResponse r = m_spotify.GetStatus();

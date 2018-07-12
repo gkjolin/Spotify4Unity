@@ -27,7 +27,8 @@ public class Track
     /// <summary>
     /// URl of the song
     /// </summary>
-    public string ShareURl { get; set; }
+    public string ShareURL { get; set; }
+    public string InternalCode { get; set; }
 
     /// <summary>
     /// Total time in seconds the song is
@@ -38,7 +39,7 @@ public class Track
 
     public Track()
     {
-
+        
     }
 
     public Track(SpotifyAPI.Local.Models.Track t)
@@ -48,9 +49,10 @@ public class Track
         Artist = t.ArtistResource.Name;
         Title = t.TrackResource.Name;
         Album = t.AlbumResource.Name;
-        ShareURl = t.TrackResource.Location.Og;
+        ShareURL = t.TrackResource.Location.Og;
 
         TotalTime = t.Length;
+        InternalCode = t.TrackResource.Uri;
     }
 
     public string GetAlbumArtUrl(Resolution resolution)

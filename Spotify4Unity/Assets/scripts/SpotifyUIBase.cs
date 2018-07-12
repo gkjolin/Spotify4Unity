@@ -7,6 +7,8 @@ public class SpotifyUIBase : MonoBehaviour
 {
     public bool AutoConnect = false;
 
+    protected Track.Resolution m_albumArtResolution = Track.Resolution.Small;
+
     protected SpotifyService m_spotifyService = null;
     protected EventManager m_eventManager = null;
 
@@ -72,6 +74,18 @@ public class SpotifyUIBase : MonoBehaviour
         m_spotifyService.SetVolume(newVolume);
     }
 
+    protected void SetCurrentTrackTime(float time)
+    {
+        if (time > m_spotifyService.CurrentTrackTime)
+            return;
+
+        if(time != m_spotifyService.CurrentTrackTime)
+        {
+            m_spotifyService.SetTrackPosition(time);
+            Debug.Log("Set time to new time");
+        }
+    }
+
     /// <summary>
     /// Gets information on the currently playing track like title, arists, album name, etc
     /// </summary>
@@ -108,7 +122,7 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void OnTrackChanged(TrackChanged e)
     {
-        LoadAlbumArt(e.NewTrack);
+        LoadAlbumArt(e.NewTrack, m_albumArtResolution);
     }
 
     private void OnTrackTimeChanged(float currentTime, float totalTime)
