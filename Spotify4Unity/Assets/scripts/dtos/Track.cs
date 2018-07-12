@@ -1,9 +1,17 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Track
 {
+    public enum Resolution
+    {
+        Small,
+        Medium,
+        Large
+    }
+
     /// <summary>
     /// Name of the artist(s) that created the track
     /// </summary>
@@ -26,6 +34,8 @@ public class Track
     /// </summary>
     public float TotalTime { get; set; }
 
+    private SpotifyAPI.Local.Models.Track m_originalTrack = null;
+
     public Track()
     {
 
@@ -33,11 +43,37 @@ public class Track
 
     public Track(SpotifyAPI.Local.Models.Track t)
     {
+        m_originalTrack = t;
+
         Artist = t.ArtistResource.Name;
         Title = t.TrackResource.Name;
         Album = t.AlbumResource.Name;
         ShareURl = t.TrackResource.Location.Og;
 
         TotalTime = t.Length;
+    }
+
+    public string GetAlbumArtUrl(Resolution resolution)
+    {
+        if(m_originalTrack != null)
+        {
+            SpotifyAPI.Local.Enums.AlbumArtSize size = SpotifyAPI.Local.Enums.AlbumArtSize.Size160;
+            switch (resolution)
+            {
+                case Resolution.Small:
+                    size = SpotifyAPI.Local.Enums.AlbumArtSize.Size160;
+                    break;
+                case Resolution.Medium:
+                    size = SpotifyAPI.Local.Enums.AlbumArtSize.Size320;
+                    break;
+                case Resolution.Large:
+                    size = SpotifyAPI.Local.Enums.AlbumArtSize.Size640;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            return m_originalTrack.GetAlbumArtUrl(size);
+        }
+        return null;
     }
 }

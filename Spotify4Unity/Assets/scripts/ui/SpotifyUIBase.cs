@@ -12,14 +12,18 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        m_spotifyService = new SpotifyService();
-        if (AutoConnect && !m_spotifyService.IsConnected)
-            m_spotifyService.Connect();
-
         m_eventManager = gameObject.AddComponent<EventManager>();
         m_eventManager.AddListener<PlayStatusChanged>(OnPlayStatusChanged);
+        m_eventManager.AddListener<TrackChanged>(OnTrackChanged);
+        m_eventManager.AddListener<TrackTimeChanged>(OnTrackTimeChanged);
 
+        m_spotifyService = new SpotifyService();
         m_spotifyService.OnPlayStatusChanged += OnPlayChanged;
+        m_spotifyService.OnTrackChanged += OnTrackChanged;
+        m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
+
+        if (AutoConnect && !m_spotifyService.IsConnected)
+            m_spotifyService.Connect();
     }
 
     protected virtual void Start ()
@@ -80,21 +84,52 @@ public class SpotifyUIBase : MonoBehaviour
             return false;
     }
 
-    protected virtual void OnTrackTimeChanged(float currentTime, float totalTime)
-    {
-
-    }
-
     private void OnPlayChanged(bool isPlaying)
     {
-        Debug.Log("IsPlaying changed to " + isPlaying);
-        //OnPlayStatusChanged(isPlaying);
-
         m_eventManager.QueueEvent(new PlayStatusChanged(isPlaying));
     }
 
     protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
     {
         
+    }
+
+    private void OnTrackChanged(Track track)
+    {
+        m_eventManager.QueueEvent(new TrackChanged(track));
+    }
+
+    protected virtual void OnTrackChanged(TrackChanged e)
+    {
+        LoadAlbumArt(e.NewTrack);
+    }
+
+    private void OnTrackTimeChanged(float currentTime, float totalTime)
+    {
+        m_eventManager.QueueEvent(new TrackTimeChanged(currentTime, totalTime));
+    }
+
+    protected virtual void OnTrackTimeChanged(TrackTimeChanged e)
+    {
+
+    }
+
+    private IEnumerator LoadAlbumArt(string url)
+    {
+        WWW imageArtWWW = new WWW(url);
+        yield return imageArtWWW;
+        Sprite s = Sprite.Create(imageArtWWW.texture, new Rect(0, 0, imageArtWWW.texture.width, imageArtWWW.texture.height), new Vector2(0, 0));
+        OnAlbumArtLoaded(s);
+    }
+
+    protected virtual void OnAlbumArtLoaded(Sprite s)
+    {
+
+    }
+
+    private void LoadAlbumArt(Track t, Track.Resolution resolution = Track.Resolution.Small)
+    {
+        string url = t.GetAlbumArtUrl(resolution);
+        StartCoroutine(LoadAlbumArt(url));
     }
 }

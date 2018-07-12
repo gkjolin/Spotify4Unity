@@ -29,6 +29,8 @@ public class SpotifyService
     public VolumeInfo Volume = null;
 
     public event Action<bool> OnPlayStatusChanged;
+    public event Action<Track> OnTrackChanged;
+    public event Action<float, float> OnTrackTimeChanged;
 
     private SpotifyLocalAPI m_spotify;
 
@@ -182,7 +184,10 @@ public class SpotifyService
         m_spotify.ListenForEvents = true;
 
         StatusResponse status = m_spotify.GetStatus();
+        //Set track and invoke it being changed
         CurrentTrack = new Track(status.Track);
+        OnTrackChanged?.Invoke(CurrentTrack);
+
         IsPlaying = status.Playing;
         Volume = new VolumeInfo()
         {
@@ -204,11 +209,13 @@ public class SpotifyService
     private void OnTrackTimeChangedInternal(object sender, TrackTimeChangeEventArgs e)
     {
         CurrentTrackTime = (float)e.TrackTime;
+        OnTrackTimeChanged?.Invoke(CurrentTrackTime, CurrentTrack.TotalTime);
     }
 
     private void OnTrackChangedInternal(object sender, TrackChangeEventArgs e)
     {
         CurrentTrack = new Track(e.NewTrack);
+        OnTrackChanged?.Invoke(CurrentTrack);
     }
 
     private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)

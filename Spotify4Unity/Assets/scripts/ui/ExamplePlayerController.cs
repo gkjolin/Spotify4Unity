@@ -28,7 +28,7 @@ public class ExamplePlayerController : SpotifyUIBase
     Button m_pauseBtn;
 
     [SerializeField]
-    Sprite m_albumArt;
+    Image m_albumArt;
 
     #region MonoBehavious
     protected override void Awake()
@@ -97,21 +97,21 @@ public class ExamplePlayerController : SpotifyUIBase
         m_spotifyService.Play();
     }
 
-    protected override void OnTrackTimeChanged(float currentTime, float totalTime)
+    protected override void OnTrackTimeChanged(TrackTimeChanged e)
     {
-        base.OnTrackTimeChanged(currentTime, totalTime);
+        base.OnTrackTimeChanged(e);
 
         if (m_playingSlider != null)
         {
-            m_playingSlider.value = m_spotifyService.CurrentTrackTime;
-            m_playingSlider.maxValue = m_spotifyService.CurrentTrack.TotalTime;
+            m_playingSlider.value = e.CurrentTime;
+            m_playingSlider.maxValue = e.TotalTime;
         }
     }
 
     protected override void OnPlayStatusChanged(PlayStatusChanged e)
     {
         base.OnPlayStatusChanged(e);
-        Debug.Log("onchanged");
+        
         if (m_playBtn != null && m_playBtn.isActiveAndEnabled != !e.IsPlaying)
         {
             m_playBtn.gameObject.SetActive(!e.IsPlaying);
@@ -120,6 +120,22 @@ public class ExamplePlayerController : SpotifyUIBase
         if (m_pauseBtn != null && m_pauseBtn.isActiveAndEnabled != e.IsPlaying)
         {
             m_pauseBtn.gameObject.SetActive(e.IsPlaying);
+        }
+    }
+
+    protected override void OnTrackChanged(TrackChanged e)
+    {
+        base.OnTrackChanged(e);
+    }
+
+    protected override void OnAlbumArtLoaded(Sprite s)
+    {
+        base.OnAlbumArtLoaded(s);
+
+        if (m_albumArt != null)
+        {
+            m_albumArt.sprite = s;
+            Debug.Log("Album art loaded");
         }
     }
 }
