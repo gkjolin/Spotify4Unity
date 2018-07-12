@@ -55,14 +55,6 @@ public class ExamplePlayerController : SpotifyUIBase
     {
         if (m_spotifyService.IsConnected)
         {
-            //Gets the current volume information
-            VolumeInfo volume = GetVolume();
-            if(volume != null)
-            {
-                m_volumeSlider.value = volume.CurrentVolume;
-                m_volumeSlider.maxValue = volume.MaxVolume;
-            }
-
             //Get current track information and set text
             Track currentTrack = GetCurrentSongInfo();
             m_playingText.text = $"{m_spotifyService.CurrentTrack.Artist} - {m_spotifyService.CurrentTrack.Title} - {m_spotifyService.CurrentTrack.Album}";
@@ -136,6 +128,17 @@ public class ExamplePlayerController : SpotifyUIBase
         {
             m_albumArt.sprite = s;
             Debug.Log("Album art loaded");
+        }
+    }
+
+    protected override void OnVolumeChanged(VolumeChanged e)
+    {
+        base.OnVolumeChanged(e);
+
+        if(m_volumeSlider != null)
+        {
+            m_volumeSlider.value = e.Volume;
+            m_volumeSlider.maxValue = e.MaxVolume;
         }
     }
 }

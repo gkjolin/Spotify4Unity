@@ -16,11 +16,13 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<PlayStatusChanged>(OnPlayStatusChanged);
         m_eventManager.AddListener<TrackChanged>(OnTrackChanged);
         m_eventManager.AddListener<TrackTimeChanged>(OnTrackTimeChanged);
+        m_eventManager.AddListener<VolumeChanged>(OnVolumeChanged);
 
         m_spotifyService = new SpotifyService();
         m_spotifyService.OnPlayStatusChanged += OnPlayChanged;
         m_spotifyService.OnTrackChanged += OnTrackChanged;
         m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
+        m_spotifyService.OnVolumeChanged += OnVolumeChanged;
 
         if (AutoConnect && !m_spotifyService.IsConnected)
             m_spotifyService.Connect();
@@ -131,5 +133,15 @@ public class SpotifyUIBase : MonoBehaviour
     {
         string url = t.GetAlbumArtUrl(resolution);
         StartCoroutine(LoadAlbumArt(url));
+    }
+
+    private void OnVolumeChanged(VolumeInfo info)
+    {
+        m_eventManager.QueueEvent(new VolumeChanged(info.CurrentVolume, info.MaxVolume));
+    }
+
+    protected virtual void OnVolumeChanged(VolumeChanged e)
+    {
+
     }
 }

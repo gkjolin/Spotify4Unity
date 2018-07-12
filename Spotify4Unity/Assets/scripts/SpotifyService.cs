@@ -31,6 +31,7 @@ public class SpotifyService
     public event Action<bool> OnPlayStatusChanged;
     public event Action<Track> OnTrackChanged;
     public event Action<float, float> OnTrackTimeChanged;
+    public event Action<VolumeInfo> OnVolumeChanged;
 
     private SpotifyLocalAPI m_spotify;
 
@@ -184,26 +185,36 @@ public class SpotifyService
         m_spotify.ListenForEvents = true;
 
         StatusResponse status = m_spotify.GetStatus();
-        //Set track and invoke it being changed
-        CurrentTrack = new Track(status.Track);
-        OnTrackChanged?.Invoke(CurrentTrack);
+        SetTrack(status.Track);
 
         IsPlaying = status.Playing;
-        Volume = new VolumeInfo()
+        SetVolume(new VolumeInfo()
         {
             CurrentVolume = (float)status.Volume,
             MaxVolume = MAX_VOLUME_AMOUNT,
-        };
+        });
+    }
+
+    private void SetVolume(VolumeInfo info)
+    {
+        Volume = info;
+        OnVolumeChanged?.Invoke(Volume);
+    }
+
+    private void SetTrack(SpotifyAPI.Local.Models.Track t)
+    {
+        CurrentTrack = new Track(t);
+        OnTrackChanged?.Invoke(CurrentTrack);
     }
 
     private void OnVolumeChangedInternal(object sender, VolumeChangeEventArgs e)
     {
-        Volume = new VolumeInfo()
+        SetVolume(new VolumeInfo()
         {
             CurrentVolume = (float)e.NewVolume,
             //OldVolume = (float)e.OldVolume,
             MaxVolume = MAX_VOLUME_AMOUNT,
-        };
+        });
     }
 
     private void OnTrackTimeChangedInternal(object sender, TrackTimeChangeEventArgs e)
@@ -214,8 +225,7 @@ public class SpotifyService
 
     private void OnTrackChangedInternal(object sender, TrackChangeEventArgs e)
     {
-        CurrentTrack = new Track(e.NewTrack);
-        OnTrackChanged?.Invoke(CurrentTrack);
+        SetTrack(e.NewTrack);
     }
 
     private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)
