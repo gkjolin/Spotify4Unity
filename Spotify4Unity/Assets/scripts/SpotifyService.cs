@@ -17,6 +17,10 @@ public class SpotifyService
     /// Are we connected to Spotify and able to control it
     /// </summary>
     public bool IsConnected = false;
+    /// <summary>
+    /// Is the sounds from Spotify muted
+    /// </summary>
+    public bool IsMuted = false;
 
     /// <summary>
     /// The current track being played
@@ -32,6 +36,7 @@ public class SpotifyService
     public event Action<Track> OnTrackChanged;
     public event Action<float, float> OnTrackTimeChanged;
     public event Action<VolumeInfo> OnVolumeChanged;
+    public event Action<bool> OnMuteChanged;
 
     private SpotifyLocalAPI m_spotify;
 
@@ -117,6 +122,8 @@ public class SpotifyService
         m_spotify = null;
         IsConnected = false;
         IsPlaying = false;
+        IsMuted = false;
+
         CurrentTrack = null;
         CurrentTrackTime = 0f;
         Volume = null;
@@ -144,6 +151,26 @@ public class SpotifyService
             m_spotify.Pause();
             IsPlaying = false;
         }
+    }
+
+    /// <summary>
+    /// Sets if Spotify should be muted or not
+    /// </summary>
+    /// <param name="isMuted">true is muted. False is Unmuted</param>
+    public void SetMute(bool isMuted)
+    {
+        if (IsMuted == isMuted)
+            return;
+
+        /* NOTE: Broken. InvalidCastException internal to SpotifyAPI
+        if (isMuted)
+            m_spotify.Mute();
+        else
+            m_spotify.UnMute();
+        
+        IsMuted = isMuted;
+        OnMuteChanged?.Invoke(isMuted);
+        */
     }
 
     public SongInfo GetSongInfo()
@@ -177,7 +204,8 @@ public class SpotifyService
 
     public void SetVolume(float newVolume)
     {
-        m_spotify.SetSpotifyVolume(newVolume * 100);
+        /* NOTE: Broken. InvalidCastException internal to SpotifyAPI*/
+        //m_spotify.SetSpotifyVolume(newVolume * 100);
     }
 
     private void Initialize()
@@ -193,6 +221,9 @@ public class SpotifyService
             CurrentVolume = (float)status.Volume,
             MaxVolume = MAX_VOLUME_AMOUNT,
         });
+
+        IsMuted = status.Volume == 0.0;
+        OnMuteChanged?.Invoke(IsMuted);
     }
 
     private void SetVolume(VolumeInfo info)

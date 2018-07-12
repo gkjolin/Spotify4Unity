@@ -14,7 +14,13 @@ public class ExamplePlayerController : SpotifyUIBase
 
     [SerializeField]
     Slider m_volumeSlider;
-    
+
+    [SerializeField]
+    Button m_muteBtn;
+
+    [SerializeField]
+    Button m_unmuteBtn;
+
     [SerializeField]
     Button m_previousBtn;
 
@@ -49,18 +55,17 @@ public class ExamplePlayerController : SpotifyUIBase
 
         if (m_nextBtn != null)
             m_nextBtn.onClick.AddListener(OnNextMedia);
+
+        if (m_muteBtn != null)
+            m_muteBtn.onClick.AddListener(OnMuteSound);
+        if (m_unmuteBtn != null)
+            m_unmuteBtn.onClick.AddListener(OnUnmuteSound);
+
+        m_volumeSlider.onValueChanged.AddListener(OnSetVolumeChanged);
     }
 
     protected override void Update ()
     {
-        if (m_spotifyService.IsConnected)
-        {
-            //Get current track information and set text
-            Track currentTrack = GetCurrentSongInfo();
-            m_playingText.text = $"{m_spotifyService.CurrentTrack.Artist} - {m_spotifyService.CurrentTrack.Title} - {m_spotifyService.CurrentTrack.Album}";
-
-            //m_albumArt = currentTrack.Album;
-        }
     }
     #endregion
 
@@ -118,6 +123,8 @@ public class ExamplePlayerController : SpotifyUIBase
     protected override void OnTrackChanged(TrackChanged e)
     {
         base.OnTrackChanged(e);
+        
+        m_playingText.text = $"{e.NewTrack.Artist} - {e.NewTrack.Title} - {e.NewTrack.Album}";
     }
 
     protected override void OnAlbumArtLoaded(Sprite s)
@@ -127,7 +134,7 @@ public class ExamplePlayerController : SpotifyUIBase
         if (m_albumArt != null)
         {
             m_albumArt.sprite = s;
-            Debug.Log("Album art loaded");
+            //Debug.Log("Album art loaded");
         }
     }
 
@@ -140,5 +147,34 @@ public class ExamplePlayerController : SpotifyUIBase
             m_volumeSlider.value = e.Volume;
             m_volumeSlider.maxValue = e.MaxVolume;
         }
+    }
+
+    private void OnSetVolumeChanged(float value)
+    {
+        SetVolume(value);
+    }
+
+    private void OnUnmuteSound()
+    {
+        if (m_spotifyService.IsMuted)
+        {
+            m_spotifyService.SetMute(false);
+        }
+    }
+
+    private void OnMuteSound()
+    {
+        if (!m_spotifyService.IsMuted)
+        {
+            m_spotifyService.SetMute(true);
+        }
+    }
+
+    protected override void OnMuteChanged(MuteChanged e)
+    {
+        base.OnMuteChanged(e);
+
+        m_muteBtn.gameObject.SetActive(!e.IsMuted);
+        m_unmuteBtn.gameObject.SetActive(e.IsMuted);
     }
 }

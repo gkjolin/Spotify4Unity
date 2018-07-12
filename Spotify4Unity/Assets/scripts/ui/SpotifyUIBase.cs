@@ -17,12 +17,14 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<TrackChanged>(OnTrackChanged);
         m_eventManager.AddListener<TrackTimeChanged>(OnTrackTimeChanged);
         m_eventManager.AddListener<VolumeChanged>(OnVolumeChanged);
+        m_eventManager.AddListener<MuteChanged>(OnMuteChanged);
 
         m_spotifyService = new SpotifyService();
         m_spotifyService.OnPlayStatusChanged += OnPlayChanged;
         m_spotifyService.OnTrackChanged += OnTrackChanged;
         m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
         m_spotifyService.OnVolumeChanged += OnVolumeChanged;
+        m_spotifyService.OnMuteChanged += OnMuteChanged;
 
         if (AutoConnect && !m_spotifyService.IsConnected)
             m_spotifyService.Connect();
@@ -34,6 +36,14 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void Update ()
     {
+    }
+
+    private void OnApplicationFocus(bool focus)
+    {
+        if (focus)
+        {
+            //ToDo: Update UI
+        }
     }
 
     protected virtual void OnDestroy()
@@ -91,11 +101,6 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new PlayStatusChanged(isPlaying));
     }
 
-    protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
-    {
-        
-    }
-
     private void OnTrackChanged(Track track)
     {
         m_eventManager.QueueEvent(new TrackChanged(track));
@@ -111,22 +116,12 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new TrackTimeChanged(currentTime, totalTime));
     }
 
-    protected virtual void OnTrackTimeChanged(TrackTimeChanged e)
-    {
-
-    }
-
     private IEnumerator LoadAlbumArt(string url)
     {
         WWW imageArtWWW = new WWW(url);
         yield return imageArtWWW;
         Sprite s = Sprite.Create(imageArtWWW.texture, new Rect(0, 0, imageArtWWW.texture.width, imageArtWWW.texture.height), new Vector2(0, 0));
         OnAlbumArtLoaded(s);
-    }
-
-    protected virtual void OnAlbumArtLoaded(Sprite s)
-    {
-
     }
 
     private void LoadAlbumArt(Track t, Track.Resolution resolution = Track.Resolution.Small)
@@ -140,8 +135,33 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new VolumeChanged(info.CurrentVolume, info.MaxVolume));
     }
 
+    private void OnMuteChanged(bool isMuted)
+    {
+        m_eventManager.QueueEvent(new MuteChanged(isMuted));
+    }
+
+    protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
+    {
+
+    }
+
+    protected virtual void OnTrackTimeChanged(TrackTimeChanged e)
+    {
+
+    }
+
+    protected virtual void OnAlbumArtLoaded(Sprite s)
+    {
+
+    }
+
     protected virtual void OnVolumeChanged(VolumeChanged e)
     {
 
+    }
+    
+    protected virtual void OnMuteChanged(MuteChanged e)
+    {
+        
     }
 }
