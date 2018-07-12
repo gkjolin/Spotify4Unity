@@ -9,15 +9,33 @@ using System.Reflection;
 
 public class SpotifyService
 {
+    /// <summary>
+    /// Is Spotify currently playing music?
+    /// </summary>
     public bool IsPlaying = false;
+    /// <summary>
+    /// Are we connected to Spotify and able to control it
+    /// </summary>
     public bool IsConnected = false;
 
+    /// <summary>
+    /// The current track being played
+    /// </summary>
     public Track CurrentTrack = null;
+    /// <summary>
+    /// The current position in seconds the track has played
+    /// </summary>
     public float CurrentTrackTime = 0f;
-
     public VolumeInfo Volume = null;
 
+    public event Action<bool> OnPlayStatusChanged;
+
     private SpotifyLocalAPI m_spotify;
+
+    /// <summary>
+    /// The max number for volume to be set
+    /// </summary>
+    const float MAX_VOLUME_AMOUNT = 1f;
 
     public SpotifyService()
     {
@@ -101,16 +119,28 @@ public class SpotifyService
         Volume = null;
     }
 
+    /// <summary>
+    /// Plays the song currently in Spotify
+    /// </summary>
     public void Play()
     {
-        m_spotify.Play();
-        IsPlaying = false;
+        if (!IsPlaying)
+        {
+            m_spotify.Play();
+            IsPlaying = true;
+        }
     }
 
+    /// <summary>
+    /// Pauses the current song
+    /// </summary>
     public void Pause()
     {
-        m_spotify.Pause();
-        IsPlaying = true;
+        if(IsPlaying)
+        {
+            m_spotify.Pause();
+            IsPlaying = false;
+        }
     }
 
     public SongInfo GetSongInfo()
@@ -134,12 +164,17 @@ public class SpotifyService
 
     public void NextSong()
     {
-        m_spotify.Previous();
+        m_spotify.Skip();
     }
 
     public void PreviousSong()
     {
-        m_spotify.Skip();
+        m_spotify.Previous();
+    }
+
+    public void SetVolume(float newVolume)
+    {
+        m_spotify.SetSpotifyVolume(newVolume * 100);
     }
 
     private void Initialize()
@@ -152,7 +187,7 @@ public class SpotifyService
         Volume = new VolumeInfo()
         {
             CurrentVolume = (float)status.Volume,
-            MaxVolume = 1f,
+            MaxVolume = MAX_VOLUME_AMOUNT,
         };
     }
 
@@ -161,8 +196,8 @@ public class SpotifyService
         Volume = new VolumeInfo()
         {
             CurrentVolume = (float)e.NewVolume,
-            OldVolume = (float)e.OldVolume,
-            MaxVolume = 1f,
+            //OldVolume = (float)e.OldVolume,
+            MaxVolume = MAX_VOLUME_AMOUNT,
         };
     }
 
@@ -179,5 +214,6 @@ public class SpotifyService
     private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)
     {
         IsPlaying = e.Playing;
+        OnPlayStatusChanged?.Invoke(IsPlaying);
     }
 }

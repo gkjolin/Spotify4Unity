@@ -1,0 +1,125 @@
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ExamplePlayerController : SpotifyUIBase
+{
+    [SerializeField]
+    Text m_playingText;
+
+    [SerializeField]
+    Slider m_playingSlider;
+
+    [SerializeField]
+    Slider m_volumeSlider;
+    
+    [SerializeField]
+    Button m_previousBtn;
+
+    [SerializeField]
+    Button m_nextBtn;
+
+    [SerializeField]
+    Button m_playBtn;
+
+    [SerializeField]
+    Button m_pauseBtn;
+
+    [SerializeField]
+    Sprite m_albumArt;
+
+    #region MonoBehavious
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if(m_nextBtn != null)
+            m_nextBtn.onClick.AddListener(OnPlayMedia);
+
+        if (m_pauseBtn != null)
+            m_pauseBtn.onClick.AddListener(OnPauseMedia);
+
+        if (m_playBtn != null)
+            m_playBtn.onClick.AddListener(OnPlayMedia);
+
+        if (m_previousBtn != null)
+            m_previousBtn.onClick.AddListener(OnPreviousMedia);
+
+        if (m_nextBtn != null)
+            m_nextBtn.onClick.AddListener(OnNextMedia);
+    }
+
+    protected override void Update ()
+    {
+        if (m_spotifyService.IsConnected)
+        {
+            //Gets the current volume information
+            VolumeInfo volume = GetVolume();
+            if(volume != null)
+            {
+                m_volumeSlider.value = volume.CurrentVolume;
+                m_volumeSlider.maxValue = volume.MaxVolume;
+            }
+
+            //Get current track information and set text
+            Track currentTrack = GetCurrentSongInfo();
+            m_playingText.text = $"{m_spotifyService.CurrentTrack.Artist} - {m_spotifyService.CurrentTrack.Title} - {m_spotifyService.CurrentTrack.Album}";
+
+            //m_albumArt = currentTrack.Album;
+        }
+    }
+    #endregion
+
+    public void Connect()
+    {
+        m_spotifyService.Connect();
+    }
+
+    private void OnNextMedia()
+    {
+        m_spotifyService.NextSong();
+    }
+
+    private void OnPreviousMedia()
+    {
+        m_spotifyService.PreviousSong();
+    }
+
+    private void OnPauseMedia()
+    {
+        m_spotifyService.Pause();
+    }
+
+    private void OnPlayMedia()
+    {
+        m_spotifyService.Play();
+    }
+
+    protected override void OnTrackTimeChanged(float currentTime, float totalTime)
+    {
+        base.OnTrackTimeChanged(currentTime, totalTime);
+
+        if (m_playingSlider != null)
+        {
+            m_playingSlider.value = m_spotifyService.CurrentTrackTime;
+            m_playingSlider.maxValue = m_spotifyService.CurrentTrack.TotalTime;
+        }
+    }
+
+    protected override void OnPlayStatusChanged(PlayStatusChanged e)
+    {
+        base.OnPlayStatusChanged(e);
+        Debug.Log("onchanged");
+        if (m_playBtn != null && m_playBtn.isActiveAndEnabled != !e.IsPlaying)
+        {
+            m_playBtn.gameObject.SetActive(!e.IsPlaying);
+        }
+
+        if (m_pauseBtn != null && m_pauseBtn.isActiveAndEnabled != e.IsPlaying)
+        {
+            m_pauseBtn.gameObject.SetActive(e.IsPlaying);
+        }
+    }
+}
