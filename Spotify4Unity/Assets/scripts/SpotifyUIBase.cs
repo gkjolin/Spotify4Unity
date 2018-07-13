@@ -75,16 +75,33 @@ public class SpotifyUIBase : MonoBehaviour
         m_spotifyService.SetVolume(newVolume);
     }
 
-    protected void SetCurrentTrackTime(float time)
+    /// <summary>
+    /// Sets the current track to a position in seconds
+    /// </summary>
+    /// <param name="positionSeconds"></param>
+    protected void SetCurrentTrackTime(float positionSeconds)
     {
-        if (time > m_spotifyService.CurrentTrackTime)
+        if (positionSeconds > m_spotifyService.CurrentTrackTime)
             return;
 
-        if(time != m_spotifyService.CurrentTrackTime)
+        if(positionSeconds != m_spotifyService.CurrentTrackTime)
         {
-            m_spotifyService.SetTrackPosition(time);
-            Debug.Log("Set time to new time");
+            m_spotifyService.SetTrackPosition(positionSeconds);
         }
+    }
+
+    /// <summary>
+    /// Sets the current track position using minutes and seconds
+    /// </summary>
+    /// <param name="minutes"></param>
+    /// <param name="seconds"></param>
+    protected void SetCurrentTrackTime(int minutes, int seconds)
+    {
+        float totalSeconds = (minutes * 60) + seconds;
+        if (totalSeconds > m_spotifyService.CurrentTrackTime)
+            return;
+
+        m_spotifyService.SetTrackPosition(minutes, seconds);
     }
 
     /// <summary>
@@ -121,16 +138,16 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new TrackChanged(track));
     }
 
-    protected virtual void OnTrackChanged(TrackChanged e)
-    {
-        LoadAlbumArt(e.NewTrack, m_albumArtResolution);
-    }
-
     private void OnTrackTimeChanged(float currentTime, float totalTime)
     {
         m_eventManager.QueueEvent(new TrackTimeChanged(currentTime, totalTime));
     }
 
+    /// <summary>
+    /// Loads album art from a string URL using WWW. Calls OnAlbumArtLoaded(Sprite s) when complete
+    /// </summary>
+    /// <param name="url">The url of the image</param>
+    /// <returns></returns>
     private IEnumerator LoadAlbumArt(string url)
     {
         WWW imageArtWWW = new WWW(url);
@@ -156,17 +173,17 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new MuteChanged(isMuted));
     }
 
+    protected virtual void OnTrackChanged(TrackChanged e)
+    {
+        LoadAlbumArt(e.NewTrack, m_albumArtResolution);
+    }
+
     protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
     {
 
     }
 
     protected virtual void OnTrackTimeChanged(TrackTimeChanged e)
-    {
-
-    }
-
-    protected virtual void OnAlbumArtLoaded(Sprite s)
     {
 
     }
@@ -179,5 +196,10 @@ public class SpotifyUIBase : MonoBehaviour
     protected virtual void OnMuteChanged(MuteChanged e)
     {
         
+    }
+
+    protected virtual void OnAlbumArtLoaded(Sprite s)
+    {
+
     }
 }
