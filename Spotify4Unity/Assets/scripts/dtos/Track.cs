@@ -7,8 +7,17 @@ public class Track
 {
     public enum Resolution
     {
+        /// <summary>
+        /// 160x160
+        /// </summary>
         Small,
+        /// <summary>
+        /// 320x320
+        /// </summary>
         Medium,
+        /// <summary>
+        /// 640x640
+        /// </summary>
         Large
     }
 

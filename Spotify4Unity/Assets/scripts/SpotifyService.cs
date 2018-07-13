@@ -1,14 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using SpotifyAPI;
 using SpotifyAPI.Local;
 using SpotifyAPI.Local.Models;
+using SpotifyAPI.Web;
+using SpotifyAPI.Web.Auth;
+using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
 using System;
-using SpotifyAPI;
+using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
-public class SpotifyService
+public class SpotifyService : MonoBehaviour
 {
+    /// <summary>
+    ///Should the control automatically connect to Spotify when not connected?
+    /// </summary>
+    public bool AutoConnect = false;
     /// <summary>
     /// Is Spotify currently playing music?
     /// </summary>
@@ -21,6 +29,7 @@ public class SpotifyService
     /// Is the sounds from Spotify muted
     /// </summary>
     public bool IsMuted = false;
+    public List<Track> SavedTracks = new List<Track>();
 
     /// <summary>
     /// The current track being played
@@ -38,41 +47,69 @@ public class SpotifyService
     public event Action<VolumeInfo> OnVolumeChanged;
     public event Action<bool> OnMuteChanged;
 
-    private SpotifyLocalAPI m_spotify;
+    private SpotifyLocalAPI m_spotify = null;
+    private SpotifyWebAPI m_webAPI = null;
 
+    private ProxyConfig m_proxyConfig = null;
+    private SpotifyLocalAPIConfig m_localProxyConfig = null;
+    
     /// <summary>
     /// The max number for volume to be set
     /// </summary>
     const float MAX_VOLUME_AMOUNT = 1f;
+    const string CLIENT_ID = "26d287105e31491889f3cd293d85bfea";
 
     public SpotifyService()
     {
-    }
+        m_proxyConfig = new ProxyConfig();
 
-    public bool Connect()
-    {
-        var config = new SpotifyLocalAPIConfig
+        m_localProxyConfig = new SpotifyLocalAPIConfig
         {
             ProxyConfig = new ProxyConfig()
             {
                 Port = 80,
             }
         };
+    }
 
-        m_spotify = new SpotifyLocalAPI(config);
+    #region MonoBehavious
+    private void Awake()
+    {
+        if (AutoConnect)
+        {
+            Connect();
+        }
+    }
+    #endregion
+
+    public bool Connect()
+    {
+        m_spotify = new SpotifyLocalAPI(m_localProxyConfig);
         m_spotify.OnPlayStateChange += OnPlayChangedInternal;
         m_spotify.OnTrackChange += OnTrackChangedInternal;
         m_spotify.OnTrackTimeChange += OnTrackTimeChangedInternal;
         m_spotify.OnVolumeChange += OnVolumeChangedInternal;
 
+        bool localSpotifySuccessfulConnect = ConnectSpotifyLocal();
+        bool webHelperSuccessfulConnect = ConnectSpotifyWebHelper();
+        if (localSpotifySuccessfulConnect)
+        {
+            Initialize();
+        }
+        else
+        {
+            Debug.Log("Unable to connect");
+        }
+
+        IsConnected = localSpotifySuccessfulConnect || webHelperSuccessfulConnect;
+        return IsConnected;
+    }
+
+    private bool ConnectSpotifyLocal()
+    {
         if (!SpotifyLocalAPI.IsSpotifyRunning())
         {
-            Debug.Log(@"Spotify isn't running!");
-            return false;
-        }
-        if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
-        {
-            Debug.Log(@"SpotifyWebHelper isn't running!");
+            Debug.Log("Spotify isn't running!");
             return false;
         }
 
@@ -81,7 +118,7 @@ public class SpotifyService
         {
             successful = m_spotify.Connect();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Debug.Log(e.ToString());
 
@@ -93,18 +130,36 @@ public class SpotifyService
                     Debug.Log(displayName.Invoke(null, null));
             }
         }
-
-        if (successful)
-        {
-            Initialize();
-        }
-        else
-        {
-            Debug.Log("Unable to connect");
-        }
-
-        IsConnected = successful;
         return successful;
+    }
+
+    private bool ConnectSpotifyWebHelper()
+    {
+        if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
+        {
+            Debug.Log("SpotifyWebHelper isn't running!");
+            return false;
+        }
+
+        WebAPIFactory webApiFactory = new WebAPIFactory(
+            "http://localhost",
+            8000,
+            CLIENT_ID,
+            Scope.UserReadPrivate | Scope.UserReadEmail | Scope.PlaylistReadPrivate | Scope.UserLibraryRead |
+            Scope.UserReadPrivate | Scope.UserFollowRead | Scope.UserReadBirthdate | Scope.UserTopRead | Scope.PlaylistReadCollaborative |
+            Scope.UserReadRecentlyPlayed | Scope.UserReadPlaybackState | Scope.UserModifyPlaybackState,
+            m_proxyConfig);
+
+        try
+        {
+            m_webAPI = webApiFactory.GetWebApi().Result;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Unable to connect to WebAPI - {ex}");
+        }
+
+        return m_webAPI != null;
     }
 
     private void Initialize()
@@ -300,5 +355,44 @@ public class SpotifyService
     private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)
     {
         SetPlaying(e.Playing);
+    }
+
+    /// <summary>
+    /// Gets all tracks saved to the users library in Spotify
+    /// </summary>
+    /// <returns></returns>
+    public List<Track> GetSavedTracks()
+    {
+        if(m_webAPI == null)
+        {
+            Debug.LogError("Can't get saved tracks since WebAPI isn't connected");
+            return null;
+        }
+
+        List<Track> tracks = new List<Track>();
+
+        Paging<SavedTrack> savedTracks = m_webAPI.GetSavedTracks();
+        List<FullTrack> list = savedTracks.Items.Select(x => x.Track).ToList();
+
+        while (savedTracks.Next != null)
+        {
+            savedTracks = m_webAPI.GetSavedTracks(20, savedTracks.Offset + savedTracks.Limit);
+            list.AddRange(savedTracks.Items.Select(t => t.Track));
+        }
+
+        foreach (FullTrack t in list)
+        {
+            tracks.Add(new Track()
+            {
+                Title = t.Name,
+                Artist = "ToDo",
+                Album = t.Album.Name,
+                ShareURL = t.PreviewUrl,
+                InternalCode = t.Uri,
+                TotalTime = t.DurationMs / 1000,
+            });
+        }
+
+        return tracks;
     }
 }

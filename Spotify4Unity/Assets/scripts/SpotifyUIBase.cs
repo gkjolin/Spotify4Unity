@@ -5,11 +5,14 @@ using UnityEngine;
 
 public class SpotifyUIBase : MonoBehaviour
 {
-    [Tooltip("Should the control automatically connect to Spotify when not connected?")]
-    public bool AutoConnect = false;
-
+    /// <summary>
+    /// Sets the different type of album art resolution to be used
+    /// </summary>
     protected Track.Resolution m_albumArtResolution = Track.Resolution.Small;
 
+    protected List<Track> m_savedTracks = null;
+
+    [SerializeField]
     protected SpotifyService m_spotifyService = null;
     protected EventManager m_eventManager = null;
 
@@ -22,15 +25,25 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<VolumeChanged>(OnVolumeChanged);
         m_eventManager.AddListener<MuteChanged>(OnMuteChanged);
 
-        m_spotifyService = new SpotifyService();
-        m_spotifyService.OnPlayStatusChanged += OnPlayChanged;
-        m_spotifyService.OnTrackChanged += OnTrackChanged;
-        m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
-        m_spotifyService.OnVolumeChanged += OnVolumeChanged;
-        m_spotifyService.OnMuteChanged += OnMuteChanged;
+        if (m_spotifyService == null)
+        {
+            SpotifyService service = GameObject.FindObjectOfType<SpotifyService>();
+            if(service == null)
+            {
+                Debug.LogError($"No SpotifyService set on GameObject {this.gameObject.name}");
+                service = this.gameObject.AddComponent<SpotifyService>();
+            }
+            m_spotifyService = service;
+        }
 
-        if (AutoConnect && !m_spotifyService.IsConnected)
-            m_spotifyService.Connect();
+        if (m_spotifyService != null)
+        {
+            m_spotifyService.OnPlayStatusChanged += OnPlayChanged;
+            m_spotifyService.OnTrackChanged += OnTrackChanged;
+            m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
+            m_spotifyService.OnVolumeChanged += OnVolumeChanged;
+            m_spotifyService.OnMuteChanged += OnMuteChanged;
+        }
     }
 
     protected virtual void Start ()
@@ -199,6 +212,11 @@ public class SpotifyUIBase : MonoBehaviour
     }
 
     protected virtual void OnAlbumArtLoaded(Sprite s)
+    {
+
+    }
+
+    protected virtual void OnSavedTracksLoaded(List<Track> tracks)
     {
 
     }
