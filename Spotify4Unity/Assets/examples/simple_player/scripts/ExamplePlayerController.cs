@@ -7,7 +7,13 @@ using UnityEngine.UI;
 public class ExamplePlayerController : SpotifyUIBase
 {
     [SerializeField]
-    Text m_playingText;
+    Text m_aristText;
+
+    [SerializeField]
+    Text m_trackText;
+
+    [SerializeField]
+    Text m_albumText;
 
     [SerializeField]
     Slider m_playingSlider;
@@ -37,6 +43,7 @@ public class ExamplePlayerController : SpotifyUIBase
     Image m_albumArt;
 
     bool m_isDraggingTrackPositionSlider = false;
+    float m_lastTrackPosSliderValue = -1f;
 
     #region MonoBehavious
     protected override void Awake()
@@ -136,8 +143,15 @@ public class ExamplePlayerController : SpotifyUIBase
     protected override void OnTrackChanged(TrackChanged e)
     {
         base.OnTrackChanged(e);
-        
-        m_playingText.text = $"{e.NewTrack.Artist} - {e.NewTrack.Title} - {e.NewTrack.Album}";
+
+        if (m_aristText != null)
+            m_aristText.text = e.NewTrack.Artist;
+
+        if (m_trackText != null)
+            m_trackText.text = e.NewTrack.Title;
+
+        if (m_albumText != null)
+            m_albumText.text = e.NewTrack.Album;
     }
 
     protected override void OnAlbumArtLoaded(Sprite s)
@@ -147,7 +161,6 @@ public class ExamplePlayerController : SpotifyUIBase
         if (m_albumArt != null)
         {
             m_albumArt.sprite = s;
-            //Debug.Log("Album art loaded");
         }
     }
 
@@ -193,11 +206,7 @@ public class ExamplePlayerController : SpotifyUIBase
 
     private void OnSetTrackPosition(float sliderValue)
     {
-        if (m_isDraggingTrackPositionSlider)
-        {
-            m_spotifyService.SetTrackPosition(sliderValue);
-            Debug.Log($"Set track position to {sliderValue} seconds");
-        }
+        m_lastTrackPosSliderValue = sliderValue;
     }
 
     public void OnMouseDownTrackTimeSlider()
@@ -207,6 +216,13 @@ public class ExamplePlayerController : SpotifyUIBase
 
     public void OnMouseUpTrackTimeSlider()
     {
+        if(m_lastTrackPosSliderValue > 0f)
+        {
+            m_spotifyService.SetTrackPosition(m_lastTrackPosSliderValue);
+            Debug.Log($"Set track position to {m_lastTrackPosSliderValue} seconds");
+        }
+
         m_isDraggingTrackPositionSlider = false;
+        m_lastTrackPosSliderValue = -1f;
     }
 }

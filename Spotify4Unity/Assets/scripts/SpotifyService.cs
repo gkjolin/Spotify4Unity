@@ -107,6 +107,21 @@ public class SpotifyService
         return successful;
     }
 
+    private void Initialize()
+    {
+        m_spotify.ListenForEvents = true;
+
+        StatusResponse status = m_spotify.GetStatus();
+        SetTrack(status.Track);
+        SetPlaying(status.Playing);
+        SetVolume(new VolumeInfo()
+        {
+            CurrentVolume = (float)status.Volume,
+            MaxVolume = MAX_VOLUME_AMOUNT,
+        });
+        SetMuted(status.Volume == 0.0);
+    }
+
     public void Disconnect()
     {
         if (m_spotify == null)
@@ -237,24 +252,6 @@ public class SpotifyService
         //m_spotify.SetSpotifyVolume(newVolume * 100);
     }
 
-    private void Initialize()
-    {
-        m_spotify.ListenForEvents = true;
-
-        StatusResponse status = m_spotify.GetStatus();
-        SetTrack(status.Track);
-
-        IsPlaying = status.Playing;
-        SetVolume(new VolumeInfo()
-        {
-            CurrentVolume = (float)status.Volume,
-            MaxVolume = MAX_VOLUME_AMOUNT,
-        });
-
-        IsMuted = status.Volume == 0.0;
-        OnMuteChanged?.Invoke(IsMuted);
-    }
-
     private void SetVolume(VolumeInfo info)
     {
         Volume = info;
@@ -265,6 +262,18 @@ public class SpotifyService
     {
         CurrentTrack = new Track(t);
         OnTrackChanged?.Invoke(CurrentTrack);
+    }
+
+    private void SetPlaying(bool isPlaying)
+    {
+        IsPlaying = isPlaying;
+        OnPlayStatusChanged?.Invoke(IsPlaying);
+    }
+
+    private void SetMuted(bool isMuted)
+    {
+        IsMuted = isMuted;
+        OnMuteChanged?.Invoke(IsMuted);
     }
 
     private void OnVolumeChangedInternal(object sender, VolumeChangeEventArgs e)
@@ -290,7 +299,6 @@ public class SpotifyService
 
     private void OnPlayChangedInternal(object sender, PlayStateEventArgs e)
     {
-        IsPlaying = e.Playing;
-        OnPlayStatusChanged?.Invoke(IsPlaying);
+        SetPlaying(e.Playing);
     }
 }

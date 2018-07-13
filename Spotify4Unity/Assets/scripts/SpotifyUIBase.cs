@@ -146,7 +146,8 @@ public class SpotifyUIBase : MonoBehaviour
 
     private void OnVolumeChanged(VolumeInfo info)
     {
-        m_eventManager.QueueEvent(new VolumeChanged(info.CurrentVolume, info.MaxVolume));
+        if(info != null)
+            m_eventManager.QueueEvent(new VolumeChanged(info.CurrentVolume, info.MaxVolume));
     }
 
     private void OnMuteChanged(bool isMuted)
