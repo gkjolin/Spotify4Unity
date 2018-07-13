@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class SpotifyUIBase : MonoBehaviour
 {
+    [Tooltip("Should the control automatically connect to Spotify when not connected?")]
     public bool AutoConnect = false;
 
     protected Track.Resolution m_albumArtResolution = Track.Resolution.Small;

@@ -1,10 +1,28 @@
-﻿public class TrackTimeChanged : GameEventBase
+﻿using System;
+
+public class TrackTimeChanged : GameEventBase
 {
-    public float CurrentTime { get; set; }
+    /// <summary>
+    /// The current position of the track in seconds
+    /// </summary>
+    public float CurrentPosition { get; set; }
+    /// <summary>
+    /// The current position of the track as a time span
+    /// </summary>
+    public TimeSpan CurrentPositionSpan { get { return TimeSpan.FromSeconds(CurrentPosition); } }
+
+    /// <summary>
+    /// The total time of the track in seconds
+    /// </summary>
     public float TotalTime { get; set; }
-    public TrackTimeChanged(float current, float total)
+    /// <summary>
+    /// The total time of the track as a time span
+    /// </summary>
+    public TimeSpan TotalTimeSpan { get { return TimeSpan.FromSeconds(TotalTime); } }
+
+    public TrackTimeChanged(float currentPositionSeconds, float totalTrackTimeSeconds)
     {
-        CurrentTime = current;
-        TotalTime = total;
+        CurrentPosition = currentPositionSeconds;
+        TotalTime = totalTrackTimeSeconds;
     }
 }

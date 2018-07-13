@@ -6,40 +6,43 @@ using UnityEngine.UI;
 
 public class ExamplePlayerController : SpotifyUIBase
 {
-    [SerializeField]
-    Text m_aristText;
+    [SerializeField, Tooltip("Text to display the current track's artists")]
+    Text m_artistText;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Text to display the current track name")]
     Text m_trackText;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Text to display the current track's album name")]
     Text m_albumText;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Slider to control and display current track's position")]
     Slider m_playingSlider;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Text to display the current track position")]
+    Text m_trackPositionText;
+
+    [SerializeField, Tooltip("Slider to display and control the current volume")]
     Slider m_volumeSlider;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button used to mute Spotify sound")]
     Button m_muteBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button to unmute Spotify's sound")]
     Button m_unmuteBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button to change the track to the previous track")]
     Button m_previousBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button to change the track to the next track")]
     Button m_nextBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button to Play the track when paused")]
     Button m_playBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Button to pause the track when playing")]
     Button m_pauseBtn;
 
-    [SerializeField]
+    [SerializeField, Tooltip("Image to display the current track's album art")]
     Image m_albumArt;
 
     bool m_isDraggingTrackPositionSlider = false;
@@ -117,11 +120,19 @@ public class ExamplePlayerController : SpotifyUIBase
 
         if (m_playingSlider != null)
         {
+            //Dont update when dragging slider
             if (m_isDraggingTrackPositionSlider)
                 return;
 
-            m_playingSlider.value = e.CurrentTime;
+            m_playingSlider.value = e.CurrentPosition;
             m_playingSlider.maxValue = e.TotalTime;
+        }
+
+        if(m_trackPositionText != null)
+        {
+            string currentPosFormat = e.CurrentPositionSpan.ToString(@"mm\:ss");
+            string totalTimeFormat = e.TotalTimeSpan.ToString(@"mm\:ss");
+            m_trackPositionText.text = $"{currentPosFormat}/{totalTimeFormat}";
         }
     }
 
@@ -144,8 +155,8 @@ public class ExamplePlayerController : SpotifyUIBase
     {
         base.OnTrackChanged(e);
 
-        if (m_aristText != null)
-            m_aristText.text = e.NewTrack.Artist;
+        if (m_artistText != null)
+            m_artistText.text = e.NewTrack.Artist;
 
         if (m_trackText != null)
             m_trackText.text = e.NewTrack.Title;
