@@ -93,7 +93,9 @@ public class SpotifyService : MonoBehaviour
     {
         if (AutoConnect)
         {
-            Connect();
+            bool isConnected = Connect();
+            if (isConnected)
+                Analysis.Log("Successfully connected to Spotify");
         }
     }
     #endregion
@@ -120,9 +122,10 @@ public class SpotifyService : MonoBehaviour
         {
             InitalizeWebHelper();
         }
-        else
+
+        if(!localSpotifySuccessfulConnect && !webHelperSuccessfulConnect)
         {
-            Debug.Log("Unable to connect");
+            Analysis.Log("Unable to connect to any Spotify API - Local or Web");
         }
 
         IsConnected = localSpotifySuccessfulConnect || webHelperSuccessfulConnect;
@@ -142,7 +145,7 @@ public class SpotifyService : MonoBehaviour
     {
         if (!SpotifyLocalAPI.IsSpotifyRunning())
         {
-            Debug.Log("Spotify isn't running!");
+            Analysis.Log("Local Spotify isn't running!");
             return false;
         }
 
@@ -153,15 +156,7 @@ public class SpotifyService : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.Log(e.ToString());
-
-            Type type = Type.GetType("Mono.Runtime");
-            if (type != null)
-            {
-                MethodInfo displayName = type.GetMethod("GetDisplayName", BindingFlags.NonPublic | BindingFlags.Static);
-                if (displayName != null)
-                    Debug.Log(displayName.Invoke(null, null));
-            }
+            Analysis.Log($"Unable to connect to Local Spotify - {e}");
         }
         return successful;
     }
@@ -170,7 +165,7 @@ public class SpotifyService : MonoBehaviour
     {
         if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
         {
-            Debug.Log("SpotifyWebHelper isn't running!");
+            Analysis.Log("SpotifyWebHelper isn't running!");
             return false;
         }
 
@@ -189,7 +184,7 @@ public class SpotifyService : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Unable to connect to WebAPI - {ex}");
+            Analysis.LogError($"Unable to connect to WebAPI - {ex}");
         }
 
         return m_webAPI != null;
@@ -261,7 +256,7 @@ public class SpotifyService : MonoBehaviour
     {
         SavedTracks = GetSavedTracks();
         OnLoadedSavedTracks?.Invoke(SavedTracks);
-        Debug.Log("Tracks loaded");
+        Analysis.Log("All saved tracks loaded");
     }
 
     public void Disconnect()
@@ -295,6 +290,8 @@ public class SpotifyService : MonoBehaviour
         {
             m_spotify.Play();
             IsPlaying = true;
+
+            Analysis.Log($"Resuming song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
         }
     }
 
@@ -307,6 +304,8 @@ public class SpotifyService : MonoBehaviour
         {
             m_spotify.Pause();
             IsPlaying = false;
+
+            Analysis.Log($"Pausing song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
         }
     }
 
@@ -338,7 +337,7 @@ public class SpotifyService : MonoBehaviour
     {
         if (totalSeconds > CurrentTrack.TotalTime)
         {
-            Debug.LogError("Can't set current track position since given number is higher than track time!");
+            Analysis.LogError("Can't set current track position since given number is higher than track time");
             return;
         }
 
@@ -357,16 +356,21 @@ public class SpotifyService : MonoBehaviour
         //Requires an encoded # inbetween URI and minutes & seconds
         string hash = "%23";
         PlaySong(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
+
+        Analysis.Log($"Set '{CurrentTrack.Artist} - {CurrentTrack.Title}' position to {minutes}:{seconds}");
     }
 
     public void NextSong()
     {
         m_spotify.Skip();
+        Analysis.Log($"Playing next song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
     }
 
     public void PreviousSong()
     {
         m_spotify.Previous();
+
+        Analysis.Log($"Playing previous song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
     }
 
     public void SetVolume(float newVolume)
@@ -385,6 +389,8 @@ public class SpotifyService : MonoBehaviour
     {
         CurrentTrack = new Track(t);
         OnTrackChanged?.Invoke(CurrentTrack);
+
+        Analysis.Log($"Set current track to '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
     }
 
     private void SetPlaying(bool isPlaying)
@@ -456,7 +462,7 @@ public class SpotifyService : MonoBehaviour
     {
         if(m_webAPI == null)
         {
-            Debug.LogError("Can't get saved tracks since WebAPI isn't connected");
+            Analysis.LogError("Can't get saved tracks since WebAPI isn't connected");
             return null;
         }
 

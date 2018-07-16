@@ -230,7 +230,6 @@ public class ExamplePlayerController : SpotifyUIBase
         if(m_lastTrackPosSliderValue > 0f)
         {
             m_spotifyService.SetTrackPosition(m_lastTrackPosSliderValue);
-            Debug.Log($"Set track position to {m_lastTrackPosSliderValue} seconds");
         }
 
         m_isDraggingTrackPositionSlider = false;

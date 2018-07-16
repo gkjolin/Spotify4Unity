@@ -32,7 +32,7 @@ public class SpotifyUIBase : MonoBehaviour
             SpotifyService service = GameObject.FindObjectOfType<SpotifyService>();
             if(service == null)
             {
-                Debug.LogError($"No SpotifyService set on GameObject {this.gameObject.name}");
+                Analysis.LogError($"No SpotifyService set for GameObject {this.gameObject.name}");
                 service = this.gameObject.AddComponent<SpotifyService>();
             }
             m_spotifyService = service;
@@ -90,6 +90,7 @@ public class SpotifyUIBase : MonoBehaviour
     protected void SetVolume(float newVolume)
     {
         m_spotifyService.SetVolume(newVolume);
+        Analysis.Log($"Setting volume to {newVolume}");
     }
 
     /// <summary>
