@@ -12,7 +12,10 @@ using System.Reflection;
 using UnityEngine;
 using System.Threading;
 
-public class SpotifyService : MonoBehaviour
+/// <summary>
+/// Constant class service for controlling and retrieving information to/from Spotify
+/// </summary>
+public sealed class SpotifyService : MonoBehaviour
 {
     /// <summary>
     ///Should the control automatically connect to Spotify when not connected?
@@ -38,6 +41,14 @@ public class SpotifyService : MonoBehaviour
     /// All tracks saved to the users Spotify library
     /// </summary>
     public List<Track> SavedTracks = new List<Track>();
+    /// <summary>
+    /// The current state of shuffle
+    /// </summary>
+    public Shuffle ShuffleState = Shuffle.Disabled;
+    /// <summary>
+    /// Current state of repeat
+    /// </summary>
+    public Repeat RepeatState = Repeat.Disabled;
 
     /// <summary>
     /// The current track being played
@@ -60,6 +71,8 @@ public class SpotifyService : MonoBehaviour
     public event Action<bool> OnMuteChanged;
     public event Action<List<Track>> OnLoadedSavedTracks;
     public event Action<UserInfo> OnUserInfoLoaded;
+    public event Action<Repeat> OnRepeatChanged;
+    public event Action<Shuffle> OnShuffleChanged;
     #endregion
 
     private SpotifyLocalAPI m_spotify = null;
@@ -216,6 +229,11 @@ public class SpotifyService : MonoBehaviour
         //Times 100 since GetStatus Volume value is between 0-1
         m_lastVolumeLevel = (int)m_spotify.GetStatus().Volume * 100;
 
+        StatusResponse currentState = m_spotify.GetStatus();
+        SetShuffleInternal(currentState.Shuffle ? Shuffle.Enabled : Shuffle.Disabled);
+        //ToDo: Check if repeat state is on song, playlist or disabled
+        SetRepeatInternal(currentState.Repeat ? Repeat.Playlist : Repeat.Disabled);
+
         LoadUserInformation();
     }
 
@@ -262,22 +280,31 @@ public class SpotifyService : MonoBehaviour
     {
         SavedTracks = GetSavedTracks();
         OnLoadedSavedTracks?.Invoke(SavedTracks);
-        Analysis.Log("All saved tracks loaded");
+        Analysis.Log($"{SavedTracks.Count} saved tracks loaded");
     }
 
+    /// <summary>
+    /// Disconnects and removes any information from the service
+    /// </summary>
     public void Disconnect()
     {
-        if (m_spotify == null)
-            return;
+        if (m_spotify != null)
+        {
+            m_spotify.OnPlayStateChange -= OnPlayChangedInternal;
+            m_spotify.OnTrackChange -= OnTrackChangedInternal;
+            m_spotify.OnTrackTimeChange -= OnTrackTimeChangedInternal;
+            m_spotify.OnVolumeChange -= OnVolumeChangedInternal;
 
-        m_spotify.OnPlayStateChange -= OnPlayChangedInternal;
-        m_spotify.OnTrackChange -= OnTrackChangedInternal;
-        m_spotify.OnTrackTimeChange -= OnTrackTimeChangedInternal;
-        m_spotify.OnVolumeChange -= OnVolumeChangedInternal;
+            m_spotify.Dispose();
+            m_spotify = null;
+        }
 
-        m_spotify.Dispose();
+        if (m_webAPI != null)
+        {
+            m_webAPI.Dispose();
+            m_webAPI = null;
+        }
 
-        m_spotify = null;
         IsConnected = false;
         IsPlaying = false;
         IsMuted = false;
@@ -285,6 +312,7 @@ public class SpotifyService : MonoBehaviour
         CurrentTrack = null;
         CurrentTrackTime = 0f;
         Volume = null;
+        SavedTracks = null;
     }
 
     /// <summary>
@@ -413,6 +441,20 @@ public class SpotifyService : MonoBehaviour
     {
         Volume = info;
         OnVolumeChanged?.Invoke(Volume);
+    }
+
+    private void SetRepeatInternal(Repeat state)
+    {
+        RepeatState = state;
+        OnRepeatChanged?.Invoke(RepeatState);
+        Analysis.Log($"Set Repeat mode to {state.ToString()}");
+    }
+
+    private void SetShuffleInternal(Shuffle state)
+    {
+        ShuffleState = state;
+        OnShuffleChanged?.Invoke(ShuffleState);
+        Analysis.Log($"Set Shuffle mode to {state.ToString()}");
     }
 
     private void SetTrack(SpotifyAPI.Local.Models.Track t)
@@ -555,5 +597,45 @@ public class SpotifyService : MonoBehaviour
     public UserInfo GetProfileInfo()
     {
         return m_userInfo;
+    }
+
+    /// <summary>
+    /// Set the repeat state in Spotify.
+    /// </summary>
+    /// <param name="state">The repeat state to set to</param>
+    public void SetRepeat(Repeat state)
+    {
+        RepeatState repeatState = SpotifyAPI.Web.Enums.RepeatState.Off;
+        switch (state)
+        {
+            case Repeat.Disabled:
+                repeatState = SpotifyAPI.Web.Enums.RepeatState.Off;
+                break;
+            case Repeat.Playlist:
+                repeatState = SpotifyAPI.Web.Enums.RepeatState.Context;
+                break;
+            case Repeat.Track:
+                repeatState = SpotifyAPI.Web.Enums.RepeatState.Track;
+                break;
+        }
+
+        RepeatState = state;
+        m_webAPI.SetRepeatMode(repeatState);
+        OnRepeatChanged?.Invoke(RepeatState);
+
+        Analysis.Log($"Set Repeat state to {state.ToString()}");
+    }
+
+    /// <summary>
+    /// Sets the shuffle state of Spotify
+    /// </summary>
+    /// <param name="state">The shuffle state to set to</param>
+    public void SetShuffle(Shuffle state)
+    {
+        ShuffleState = state;
+        m_webAPI.SetShuffle(state == Shuffle.Enabled);
+        OnShuffleChanged?.Invoke(ShuffleState);
+
+        Analysis.Log($"Set Shuffle state to {state.ToString()}");
     }
 }

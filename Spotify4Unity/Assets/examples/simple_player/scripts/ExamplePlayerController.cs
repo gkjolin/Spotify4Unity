@@ -45,8 +45,20 @@ public class ExamplePlayerController : SpotifyUIBase
     [SerializeField, Tooltip("Image to display the current track's album art")]
     Image m_albumArt;
 
-    bool m_isDraggingTrackPositionSlider = false;
-    float m_lastTrackPosSliderValue = -1f;
+    [SerializeField]
+    Button m_shuffleBtn;
+
+    [SerializeField]
+    Button m_repeatBtn;
+
+    [SerializeField]
+    Sprite[] m_repeatSprites;
+
+    [SerializeField]
+    Sprite[] m_shuffleSprites;
+
+    private bool m_isDraggingTrackPositionSlider = false;
+    private float m_lastTrackPosSliderValue = -1f;
 
     #region MonoBehavious
     protected override void Awake()
@@ -77,9 +89,13 @@ public class ExamplePlayerController : SpotifyUIBase
             m_volumeSlider.onValueChanged.AddListener(OnSetVolumeChanged);
 
         if (m_playingSlider != null)
-        {
             m_playingSlider.onValueChanged.AddListener(OnSetTrackPosition);
-        }
+
+        if (m_repeatBtn != null)
+            m_repeatBtn.onClick.AddListener(OnClickRepeat);
+
+        if (m_shuffleBtn != null)
+            m_shuffleBtn.onClick.AddListener(OnClickShuffle);
 
         //m_albumArtResolution = Track.Resolution.Large;
     }
@@ -234,5 +250,46 @@ public class ExamplePlayerController : SpotifyUIBase
 
         m_isDraggingTrackPositionSlider = false;
         m_lastTrackPosSliderValue = -1f;
+    }
+
+    private void OnClickShuffle()
+    {
+        Shuffle state = m_spotifyService.ShuffleState;
+        if (state == 0)
+            state = (Shuffle)1;
+        else
+            state = (Shuffle)0;
+
+        m_spotifyService.SetShuffle(state);
+    }
+
+    private void OnClickRepeat()
+    {
+        //Repeat button acts as a toggle through 3 items
+        Repeat state = m_spotifyService.RepeatState;
+        if (m_spotifyService.RepeatState == Repeat.Disabled)
+            state = Repeat.Playlist;
+        else if (m_spotifyService.RepeatState == Repeat.Playlist)
+            state = Repeat.Track;
+        else if (m_spotifyService.RepeatState == Repeat.Track)
+            state = Repeat.Disabled;
+
+        m_spotifyService.SetRepeat(state);
+    }
+
+    protected override void OnRepeatChanged(RepeatChanged e)
+    {
+        base.OnRepeatChanged(e);
+
+        Image img = m_repeatBtn.transform.Find("Icon").GetComponent<Image>();
+        img.sprite = m_repeatSprites[(int)e.State];
+    }
+
+    protected override void OnShuffleChanged(ShuffleChanged e)
+    {
+        base.OnShuffleChanged(e);
+
+        Image img = m_shuffleBtn.transform.Find("Icon").GetComponent<Image>();
+        img.sprite = m_shuffleSprites[(int)e.State];
     }
 }

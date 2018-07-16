@@ -26,6 +26,8 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<MuteChanged>(OnMuteChanged);
         m_eventManager.AddListener<SavedTracksLoaded>(OnSavedTracksLoaded);
         m_eventManager.AddListener<UserInfoLoaded>(OnUserInformationLoaded);
+        m_eventManager.AddListener<RepeatChanged>(OnRepeatChanged);
+        m_eventManager.AddListener<ShuffleChanged>(OnShuffleChanged);
 
         if (m_spotifyService == null)
         {
@@ -47,6 +49,8 @@ public class SpotifyUIBase : MonoBehaviour
             m_spotifyService.OnMuteChanged += OnMuteChanged;
             m_spotifyService.OnLoadedSavedTracks += OnSavedTracksLoaded;
             m_spotifyService.OnUserInfoLoaded += OnUserInformationLoaded;
+            m_spotifyService.OnRepeatChanged += OnRepeatChanged;
+            m_spotifyService.OnShuffleChanged += OnShuffleChanged;
         }
     }
 
@@ -210,6 +214,16 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.QueueEvent(new UserInfoLoaded(info));
     }
 
+    private void OnShuffleChanged(Shuffle state)
+    {
+        m_eventManager.QueueEvent(new ShuffleChanged(state));
+    }
+
+    private void OnRepeatChanged(Repeat state)
+    {
+        m_eventManager.QueueEvent(new RepeatChanged(state));
+    }
+
     protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
     {
 
@@ -248,5 +262,13 @@ public class SpotifyUIBase : MonoBehaviour
     protected virtual void OnUserProfilePictureLoaded(Sprite s)
     {
 
+    }
+
+    protected virtual void OnShuffleChanged(ShuffleChanged e)
+    {
+    }
+
+    protected virtual void OnRepeatChanged(RepeatChanged e)
+    {
     }
 }
