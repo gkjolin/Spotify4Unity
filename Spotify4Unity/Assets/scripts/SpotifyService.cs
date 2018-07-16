@@ -10,6 +10,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
+using System.Threading;
 
 public class SpotifyService : MonoBehaviour
 {
@@ -46,6 +47,7 @@ public class SpotifyService : MonoBehaviour
     public event Action<float, float> OnTrackTimeChanged;
     public event Action<VolumeInfo> OnVolumeChanged;
     public event Action<bool> OnMuteChanged;
+    public event Action<List<Track>> OnLoadedSavedTracks;
 
     private SpotifyLocalAPI m_spotify = null;
     private SpotifyWebAPI m_webAPI = null;
@@ -82,6 +84,10 @@ public class SpotifyService : MonoBehaviour
     }
     #endregion
 
+    /// <summary>
+    /// Attempts a connection to a local Spotify Client & WebAPI
+    /// </summary>
+    /// <returns>If the connection was successful or not to either client or WebAPI</returns>
     public bool Connect()
     {
         m_spotify = new SpotifyLocalAPI(m_localProxyConfig);
@@ -94,7 +100,11 @@ public class SpotifyService : MonoBehaviour
         bool webHelperSuccessfulConnect = ConnectSpotifyWebHelper();
         if (localSpotifySuccessfulConnect)
         {
-            Initialize();
+            InitializeLocalSpotify();
+        }
+        if (webHelperSuccessfulConnect)
+        {
+            InitalizeWebHelper();
         }
         else
         {
@@ -103,6 +113,15 @@ public class SpotifyService : MonoBehaviour
 
         IsConnected = localSpotifySuccessfulConnect || webHelperSuccessfulConnect;
         return IsConnected;
+    }
+
+    /// <summary>
+    /// Plays a song in Spotify from it's URI
+    /// </summary>
+    /// <param name="songUri">The URI of the song</param>
+    public void PlaySong(string songUri)
+    {
+        m_spotify.PlayURL(songUri);
     }
 
     private bool ConnectSpotifyLocal()
@@ -162,7 +181,7 @@ public class SpotifyService : MonoBehaviour
         return m_webAPI != null;
     }
 
-    private void Initialize()
+    private void InitializeLocalSpotify()
     {
         m_spotify.ListenForEvents = true;
 
@@ -177,17 +196,29 @@ public class SpotifyService : MonoBehaviour
         SetMuted(status.Volume == 0.0);
     }
 
+    private void InitalizeWebHelper()
+    {
+        Thread t = new Thread(LoadTracks);
+        t.Start();
+    }
+
+    private void LoadTracks()
+    {
+        List<Track> tracks = GetSavedTracks();
+        OnLoadedSavedTracks?.Invoke(tracks);
+    }
+
     public void Disconnect()
     {
         if (m_spotify == null)
             return;
 
-        m_spotify.Dispose();
-
         m_spotify.OnPlayStateChange -= OnPlayChangedInternal;
         m_spotify.OnTrackChange -= OnTrackChangedInternal;
         m_spotify.OnTrackTimeChange -= OnTrackTimeChangedInternal;
         m_spotify.OnVolumeChange -= OnVolumeChangedInternal;
+
+        m_spotify.Dispose();
 
         m_spotify = null;
         IsConnected = false;
@@ -269,7 +300,7 @@ public class SpotifyService : MonoBehaviour
     {
         //Requires an encoded # inbetween URI and minutes & seconds
         string hash = "%23";
-        m_spotify.PlayURL(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
+        PlaySong(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
     }
 
     public SongInfo GetSongInfo()
@@ -382,10 +413,11 @@ public class SpotifyService : MonoBehaviour
 
         foreach (FullTrack t in list)
         {
+            string arists = String.Join(", ", t.Artists.Select(x => x.Name));
             tracks.Add(new Track()
             {
                 Title = t.Name,
-                Artist = "ToDo",
+                Artist = arists,
                 Album = t.Album.Name,
                 ShareURL = t.PreviewUrl,
                 InternalCode = t.Uri,

@@ -24,6 +24,7 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<TrackTimeChanged>(OnTrackTimeChanged);
         m_eventManager.AddListener<VolumeChanged>(OnVolumeChanged);
         m_eventManager.AddListener<MuteChanged>(OnMuteChanged);
+        m_eventManager.AddListener<SavedTracksLoaded>(OnSavedTracksLoaded);
 
         if (m_spotifyService == null)
         {
@@ -43,6 +44,7 @@ public class SpotifyUIBase : MonoBehaviour
             m_spotifyService.OnTrackTimeChanged += OnTrackTimeChanged;
             m_spotifyService.OnVolumeChanged += OnVolumeChanged;
             m_spotifyService.OnMuteChanged += OnMuteChanged;
+            m_spotifyService.OnLoadedSavedTracks += OnSavedTracksLoaded;
         }
     }
 
@@ -191,6 +193,11 @@ public class SpotifyUIBase : MonoBehaviour
         LoadAlbumArt(e.NewTrack, m_albumArtResolution);
     }
 
+    private void OnSavedTracksLoaded(List<Track> t)
+    {
+        m_eventManager.QueueEvent(new SavedTracksLoaded(t));
+    }
+
     protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
     {
 
@@ -216,7 +223,7 @@ public class SpotifyUIBase : MonoBehaviour
 
     }
 
-    protected virtual void OnSavedTracksLoaded(List<Track> tracks)
+    protected virtual void OnSavedTracksLoaded(SavedTracksLoaded e)
     {
 
     }
