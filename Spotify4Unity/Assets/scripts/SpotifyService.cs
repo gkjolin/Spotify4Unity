@@ -40,6 +40,9 @@ public class SpotifyService : MonoBehaviour
     /// The current position in seconds the track has played
     /// </summary>
     public float CurrentTrackTime = 0f;
+    /// <summary>
+    /// The current volume levels
+    /// </summary>
     public VolumeInfo Volume = null;
 
     public event Action<bool> OnPlayStatusChanged;
