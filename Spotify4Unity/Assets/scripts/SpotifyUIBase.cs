@@ -84,13 +84,12 @@ public class SpotifyUIBase : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the volume of Spotify to a new amount. Number between 0-1
+    /// Sets the volume of Spotify to a new amount. Number between 0 - 100
     /// </summary>
-    /// <param name="newVolume">New volume amount between 0-1</param>
+    /// <param name="newVolume">New volume amount between 0 - 100</param>
     protected void SetVolume(float newVolume)
     {
         m_spotifyService.SetVolume(newVolume);
-        Analysis.Log($"Setting volume to {newVolume}");
     }
 
     /// <summary>

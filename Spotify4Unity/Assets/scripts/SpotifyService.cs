@@ -69,10 +69,12 @@ public class SpotifyService : MonoBehaviour
     private SpotifyLocalAPIConfig m_localProxyConfig = null;
     private UserInfo m_userInfo = null;
 
+    private int m_lastVolumeLevel = 0;
+
     /// <summary>
     /// The max number for volume to be set
     /// </summary>
-    const float MAX_VOLUME_AMOUNT = 1f;
+    const float MAX_VOLUME_AMOUNT = 100f;
     const string CLIENT_ID = "26d287105e31491889f3cd293d85bfea";
 
     public SpotifyService()
@@ -197,9 +199,10 @@ public class SpotifyService : MonoBehaviour
         StatusResponse status = m_spotify.GetStatus();
         SetTrack(status.Track);
         SetPlaying(status.Playing);
-        SetVolume(new VolumeInfo()
+        SetVolumeInternal(new VolumeInfo()
         {
-            CurrentVolume = (float)status.Volume,
+            //Times 100 since GetStatus Volume value is between 0-1
+            CurrentVolume = (float)status.Volume * 100,
             MaxVolume = MAX_VOLUME_AMOUNT,
         });
         SetMuted(status.Volume == 0.0);
@@ -209,6 +212,9 @@ public class SpotifyService : MonoBehaviour
     {
         Thread t = new Thread(LoadTracks);
         t.Start();
+
+        //Times 100 since GetStatus Volume value is between 0-1
+        m_lastVolumeLevel = (int)m_spotify.GetStatus().Volume * 100;
 
         LoadUserInformation();
     }
@@ -318,15 +324,13 @@ public class SpotifyService : MonoBehaviour
         if (IsMuted == isMuted)
             return;
 
-        /* NOTE: Broken. InvalidCastException internal to SpotifyAPI
         if (isMuted)
-            m_spotify.Mute();
+            m_webAPI.SetVolume(0);
         else
-            m_spotify.UnMute();
-        
+            m_webAPI.SetVolume(m_lastVolumeLevel);
+
         IsMuted = isMuted;
         OnMuteChanged?.Invoke(isMuted);
-        */
     }
 
     /// <summary>
@@ -373,13 +377,39 @@ public class SpotifyService : MonoBehaviour
         Analysis.Log($"Playing previous song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
     }
 
+    /// <summary>
+    /// Sets the volume of Spotify
+    /// </summary>
+    /// <param name="newVolume">New volume amount. Should be between 0 - 100</param>
     public void SetVolume(float newVolume)
     {
-        /* NOTE: Broken. InvalidCastException internal to SpotifyAPI*/
-        //m_spotify.SetSpotifyVolume(newVolume * 100);
+        int newVolPercent = (int)newVolume;
+        SetVolume(newVolPercent);
     }
 
-    private void SetVolume(VolumeInfo info)
+    /// <summary>
+    /// Sets the volume of Spotify
+    /// </summary>
+    /// <param name="newVolume">The new volume to set to. Should ne a number between 0 - 100</param>
+    public void SetVolume(int newVolume)
+    {
+        if (newVolume > 100)
+            newVolume = 100;
+
+        //Only set restore value when not muted
+        if(!IsMuted)
+            m_lastVolumeLevel = newVolume;
+
+        Volume = new VolumeInfo()
+        {
+            CurrentVolume = m_lastVolumeLevel,
+            MaxVolume = MAX_VOLUME_AMOUNT,
+        };
+        m_webAPI.SetVolume(newVolume);
+        Analysis.Log($"Set Spotify volume to {newVolume}");
+    }
+
+    private void SetVolumeInternal(VolumeInfo info)
     {
         Volume = info;
         OnVolumeChanged?.Invoke(Volume);
@@ -407,9 +437,10 @@ public class SpotifyService : MonoBehaviour
 
     private void OnVolumeChangedInternal(object sender, VolumeChangeEventArgs e)
     {
-        SetVolume(new VolumeInfo()
+        SetVolumeInternal(new VolumeInfo()
         {
-            CurrentVolume = (float)e.NewVolume,
+            //Times 100 since Volume value is between 0-1
+            CurrentVolume = (float)e.NewVolume * 100f,
             //OldVolume = (float)e.OldVolume,
             MaxVolume = MAX_VOLUME_AMOUNT,
         });
