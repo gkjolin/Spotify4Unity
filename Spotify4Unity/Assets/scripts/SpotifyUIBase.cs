@@ -12,7 +12,7 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected List<Track> m_savedTracks = null;
 
-    [SerializeField]
+    [SerializeField, Tooltip("The game object that hosts the constant Spotify Service. Will be found if in scene and not specified here")]
     protected SpotifyService m_spotifyService = null;
     protected EventManager m_eventManager = null;
 
@@ -25,6 +25,7 @@ public class SpotifyUIBase : MonoBehaviour
         m_eventManager.AddListener<VolumeChanged>(OnVolumeChanged);
         m_eventManager.AddListener<MuteChanged>(OnMuteChanged);
         m_eventManager.AddListener<SavedTracksLoaded>(OnSavedTracksLoaded);
+        m_eventManager.AddListener<UserInfoLoaded>(OnUserInformationLoaded);
 
         if (m_spotifyService == null)
         {
@@ -45,6 +46,7 @@ public class SpotifyUIBase : MonoBehaviour
             m_spotifyService.OnVolumeChanged += OnVolumeChanged;
             m_spotifyService.OnMuteChanged += OnMuteChanged;
             m_spotifyService.OnLoadedSavedTracks += OnSavedTracksLoaded;
+            m_spotifyService.OnUserInfoLoaded += OnUserInformationLoaded;
         }
     }
 
@@ -163,18 +165,23 @@ public class SpotifyUIBase : MonoBehaviour
     /// </summary>
     /// <param name="url">The url of the image</param>
     /// <returns></returns>
-    private IEnumerator LoadAlbumArt(string url)
+    private IEnumerator LoadImageFromUrl(string url, Action<Sprite> onLoaded)
     {
         WWW imageArtWWW = new WWW(url);
         yield return imageArtWWW;
-        Sprite s = Sprite.Create(imageArtWWW.texture, new Rect(0, 0, imageArtWWW.texture.width, imageArtWWW.texture.height), new Vector2(0, 0));
-        OnAlbumArtLoaded(s);
+
+        Sprite s = null;
+        if(imageArtWWW != null)
+        {
+            s = Sprite.Create(imageArtWWW.texture, new Rect(0, 0, imageArtWWW.texture.width, imageArtWWW.texture.height), new Vector2(0, 0));
+        }
+        onLoaded.Invoke(s);
     }
 
     private void LoadAlbumArt(Track t, Track.Resolution resolution = Track.Resolution.Small)
     {
         string url = t.GetAlbumArtUrl(resolution);
-        StartCoroutine(LoadAlbumArt(url));
+        StartCoroutine(LoadImageFromUrl(url, sprite => OnAlbumArtLoaded(sprite)));
     }
 
     private void OnVolumeChanged(VolumeInfo info)
@@ -196,6 +203,11 @@ public class SpotifyUIBase : MonoBehaviour
     private void OnSavedTracksLoaded(List<Track> t)
     {
         m_eventManager.QueueEvent(new SavedTracksLoaded(t));
+    }
+
+    private void OnUserInformationLoaded(UserInfo info)
+    {
+        m_eventManager.QueueEvent(new UserInfoLoaded(info));
     }
 
     protected virtual void OnPlayStatusChanged(PlayStatusChanged e)
@@ -224,6 +236,16 @@ public class SpotifyUIBase : MonoBehaviour
     }
 
     protected virtual void OnSavedTracksLoaded(SavedTracksLoaded e)
+    {
+
+    }
+
+    protected virtual void OnUserInformationLoaded(UserInfoLoaded e)
+    {
+        StartCoroutine(LoadImageFromUrl(e.Info.ProfilePictureURL, sprite => OnUserProfilePictureLoaded(sprite)));
+    }
+
+    protected virtual void OnUserProfilePictureLoaded(Sprite s)
     {
 
     }

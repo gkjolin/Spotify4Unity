@@ -30,6 +30,13 @@ public class SpotifyService : MonoBehaviour
     /// Is the sounds from Spotify muted
     /// </summary>
     public bool IsMuted = false;
+    /// <summary>
+    /// Is the user currently paying for Spotify Premium
+    /// </summary>
+    public bool IsPremium = false;
+    /// <summary>
+    /// All tracks saved to the users Spotify library
+    /// </summary>
     public List<Track> SavedTracks = new List<Track>();
 
     /// <summary>
@@ -45,19 +52,23 @@ public class SpotifyService : MonoBehaviour
     /// </summary>
     public VolumeInfo Volume = null;
 
+    #region LocalEvents
     public event Action<bool> OnPlayStatusChanged;
     public event Action<Track> OnTrackChanged;
     public event Action<float, float> OnTrackTimeChanged;
     public event Action<VolumeInfo> OnVolumeChanged;
     public event Action<bool> OnMuteChanged;
     public event Action<List<Track>> OnLoadedSavedTracks;
+    public event Action<UserInfo> OnUserInfoLoaded;
+    #endregion
 
     private SpotifyLocalAPI m_spotify = null;
     private SpotifyWebAPI m_webAPI = null;
 
     private ProxyConfig m_proxyConfig = null;
     private SpotifyLocalAPIConfig m_localProxyConfig = null;
-    
+    private UserInfo m_userInfo = null;
+
     /// <summary>
     /// The max number for volume to be set
     /// </summary>
@@ -203,12 +214,55 @@ public class SpotifyService : MonoBehaviour
     {
         Thread t = new Thread(LoadTracks);
         t.Start();
+
+        LoadUserInformation();
+    }
+
+    private void LoadUserInformation()
+    {
+        PrivateProfile privateProfile = m_webAPI.GetPrivateProfile();
+        PublicProfile publicProfile = m_webAPI.GetPublicProfile(privateProfile.Id);
+
+        IsPremium = privateProfile.Product == "premium";
+
+        string profilePicture = privateProfile.Images.Count > 0 ? privateProfile.Images.FirstOrDefault().Url : null;
+        m_userInfo = new UserInfo()
+        {
+            Username = privateProfile.DisplayName,
+            DisplayName = privateProfile.DisplayName,
+
+            Followers = privateProfile.Followers.Total,
+            IsPremium = IsPremium,
+
+            ProfilePictureURL = profilePicture,
+            Country = privateProfile.Country,
+            UserID = privateProfile.Id,
+            Birthdate = ParseBirthdate(privateProfile.Birthdate),
+        };
+        OnUserInfoLoaded?.Invoke(m_userInfo);
+    }
+
+    private DateTime ParseBirthdate(string birthdate)
+    {
+        //Format should come through as "Year-Month-Day". Simple parse
+        string[] split = birthdate.Split('-');
+        if(split.Length > 3)
+        {
+            int year = int.Parse(split[0]);
+            int month = int.Parse(split[1]);
+            int day = int.Parse(split[2]);
+            return new DateTime(year, month, day);
+        }
+        else
+        {
+            return DateTime.MinValue;
+        }
     }
 
     private void LoadTracks()
     {
-        List<Track> tracks = GetSavedTracks();
-        OnLoadedSavedTracks?.Invoke(tracks);
+        SavedTracks = GetSavedTracks();
+        OnLoadedSavedTracks?.Invoke(SavedTracks);
     }
 
     public void Disconnect()
@@ -429,5 +483,10 @@ public class SpotifyService : MonoBehaviour
         }
 
         return tracks;
+    }
+
+    public void GetProfileInfo()
+    {
+
     }
 }
