@@ -221,8 +221,6 @@ public class SpotifyService : MonoBehaviour
     private void LoadUserInformation()
     {
         PrivateProfile privateProfile = m_webAPI.GetPrivateProfile();
-        PublicProfile publicProfile = m_webAPI.GetPublicProfile(privateProfile.Id);
-
         IsPremium = privateProfile.Product == "premium";
 
         string profilePicture = privateProfile.Images.Count > 0 ? privateProfile.Images.FirstOrDefault().Url : null;
@@ -485,8 +483,12 @@ public class SpotifyService : MonoBehaviour
         return tracks;
     }
 
-    public void GetProfileInfo()
+    /// <summary>
+    /// Gets the currently loaded user information
+    /// </summary>
+    /// <returns></returns>
+    public UserInfo GetProfileInfo()
     {
-
+        return m_userInfo;
     }
 }
