@@ -161,7 +161,7 @@ public class SpotifyUIBase : MonoBehaviour
     }
 
     /// <summary>
-    /// Loads album art from a string URL using WWW. Calls OnAlbumArtLoaded(Sprite s) when complete
+    /// Loads an image from a url and runs an action on load
     /// </summary>
     /// <param name="url">The url of the image</param>
     /// <returns></returns>

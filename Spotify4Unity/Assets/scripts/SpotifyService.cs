@@ -244,7 +244,7 @@ public class SpotifyService : MonoBehaviour
     {
         //Format should come through as "Year-Month-Day". Simple parse
         string[] split = birthdate.Split('-');
-        if(split.Length > 3)
+        if(split.Length >= 3)
         {
             int year = int.Parse(split[0]);
             int month = int.Parse(split[1]);
@@ -261,6 +261,7 @@ public class SpotifyService : MonoBehaviour
     {
         SavedTracks = GetSavedTracks();
         OnLoadedSavedTracks?.Invoke(SavedTracks);
+        Debug.Log("Tracks loaded");
     }
 
     public void Disconnect()
@@ -358,25 +359,6 @@ public class SpotifyService : MonoBehaviour
         PlaySong(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
     }
 
-    public SongInfo GetSongInfo()
-    {
-        StatusResponse r = m_spotify.GetStatus();
-        if (r == null)
-            return null;
-
-        SongInfo info = new SongInfo()
-        {
-            Title = r.Track.TrackResource.Name,
-            Artist = r.Track.ArtistResource.Name,
-            AlbumName = r.Track.AlbumResource.Name,
-
-            IsPlaying = r.Playing,
-            CurrentTime = r.PlayingPosition,
-            TotalDuration = r.Track.Length,
-        };
-        return info;
-    }
-
     public void NextSong()
     {
         m_spotify.Skip();
@@ -444,7 +426,30 @@ public class SpotifyService : MonoBehaviour
     }
 
     /// <summary>
-    /// Gets all tracks saved to the users library in Spotify
+    /// Gets the latest song information
+    /// </summary>
+    /// <returns></returns>
+    public SongInfo GetSongInfo()
+    {
+        StatusResponse r = m_spotify.GetStatus();
+        if (r == null)
+            return null;
+
+        SongInfo info = new SongInfo()
+        {
+            Title = r.Track.TrackResource.Name,
+            Artist = r.Track.ArtistResource.Name,
+            AlbumName = r.Track.AlbumResource.Name,
+
+            IsPlaying = r.Playing,
+            CurrentTime = r.PlayingPosition,
+            TotalDuration = r.Track.Length,
+        };
+        return info;
+    }
+
+    /// <summary>
+    /// Gets all tracks saved to the users library in Spotify in the order they were added to their library
     /// </summary>
     /// <returns></returns>
     public List<Track> GetSavedTracks()
@@ -481,6 +486,29 @@ public class SpotifyService : MonoBehaviour
         }
 
         return tracks;
+    }
+
+    /// <summary>
+    /// Gets all saved tracks and sorts the list by an option
+    /// </summary>
+    /// <param name="sortType">The sort order the list should be in</param>
+    /// <returns>The list of saved tracks sorted by the order</returns>
+    public List<Track> GetSavedTracksSorted(Sort sortType)
+    {
+        List<Track> allSavedTracks = GetSavedTracks();
+        switch (sortType)
+        {
+            case Sort.Title:
+                return allSavedTracks.OrderBy(x => x.Title).ToList();
+            case Sort.Artist:
+                return allSavedTracks.OrderBy(x => x.Artist).ToList();
+            case Sort.Album:
+                return allSavedTracks.OrderBy(x => x.Album).ToList();
+            case Sort.Unsorted:
+                return allSavedTracks;
+            default:
+                throw new NotImplementedException("Unimplemented sort type to Saved Tracks");
+        }
     }
 
     /// <summary>
