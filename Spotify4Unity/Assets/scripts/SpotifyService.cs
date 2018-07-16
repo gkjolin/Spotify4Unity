@@ -359,7 +359,7 @@ public class SpotifyService : MonoBehaviour
     {
         //Requires an encoded # inbetween URI and minutes & seconds
         string hash = "%23";
-        PlaySong(CurrentTrack.InternalCode + $"{hash}{minutes}:{seconds}");
+        PlaySong(CurrentTrack.InternalUri + $"{hash}{minutes}:{seconds}");
 
         Analysis.Log($"Set '{CurrentTrack.Artist} - {CurrentTrack.Title}' position to {minutes}:{seconds}");
     }
@@ -517,7 +517,7 @@ public class SpotifyService : MonoBehaviour
                 Artist = arists,
                 Album = t.Album.Name,
                 ShareURL = t.PreviewUrl,
-                InternalCode = t.Uri,
+                InternalUri = t.Uri,
                 TotalTime = t.DurationMs / 1000,
             });
         }

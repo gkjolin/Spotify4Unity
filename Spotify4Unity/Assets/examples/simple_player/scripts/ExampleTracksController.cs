@@ -66,7 +66,7 @@ public class ExampleTracksController : SpotifyUIBase
             instPrefab.transform.SetParent(m_listParent);
             //Populate children of prefab with information
             instPrefab.transform.Find("Track").GetComponent<Text>().text = $"{track.Title} - {track.Artist} - {track.Album}";
-            instPrefab.transform.Find("PlayBtn").GetComponent<Button>().onClick.AddListener(() => OnPlaySong(track));
+            instPrefab.transform.Find("PlayBtn").GetComponent<Button>().onClick.AddListener(() => OnPlayTrack(track));
             //Set Y position of instantiated prefab
             RectTransform rect = instPrefab.GetComponent<RectTransform>();
             rect.localPosition = new Vector3(rect.rect.width, yPos, -rect.rect.width);
@@ -88,9 +88,9 @@ public class ExampleTracksController : SpotifyUIBase
         m_scrollRect.scrollSensitivity = m_trackListPrefab.GetComponent<RectTransform>().rect.height;
     }
 
-    private void OnPlaySong(Track t)
+    private void OnPlayTrack(Track t)
     {
-        m_spotifyService.PlaySong(t.InternalCode);
+        m_spotifyService.PlaySong(t.InternalUri);
         Debug.Log($"Playing song '{t.Title} - {t.Artist} - {t.Album}'");
     }
 

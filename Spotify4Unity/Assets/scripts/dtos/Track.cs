@@ -37,7 +37,7 @@ public class Track
     /// URl of the song
     /// </summary>
     public string ShareURL { get; set; }
-    public string InternalCode { get; set; }
+    public string InternalUri { get; set; }
 
     /// <summary>
     /// Total time in seconds the song is
@@ -61,7 +61,7 @@ public class Track
         ShareURL = t.TrackResource.Location.Og;
 
         TotalTime = t.Length;
-        InternalCode = t.TrackResource.Uri;
+        InternalUri = t.TrackResource.Uri;
     }
 
     public string GetAlbumArtUrl(Resolution resolution)
