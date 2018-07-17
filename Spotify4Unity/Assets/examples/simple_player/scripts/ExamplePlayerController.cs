@@ -100,6 +100,7 @@ public class ExamplePlayerController : SpotifyUIBase
         if (m_shuffleBtn != null)
             m_shuffleBtn.onClick.AddListener(OnClickShuffle);
 
+        //Set what resolution you want to obtain album art at
         //m_albumArtResolution = Track.Resolution.Large;
     }
 
@@ -107,11 +108,6 @@ public class ExamplePlayerController : SpotifyUIBase
     {
     }
     #endregion
-
-    public void Connect()
-    {
-        m_spotifyService.Connect();
-    }
 
     private void OnNextMedia()
     {
@@ -198,7 +194,7 @@ public class ExamplePlayerController : SpotifyUIBase
     {
         base.OnVolumeChanged(e);
 
-        if(m_volumeSlider != null)
+        if(m_volumeSlider != null && !m_isDraggingVolumeSlider)
         {
             m_volumeSlider.value = e.Volume;
             m_volumeSlider.maxValue = e.MaxVolume;
@@ -267,7 +263,6 @@ public class ExamplePlayerController : SpotifyUIBase
             m_spotifyService.SetVolume(m_lastVolumeSliderValue);
         }
 
-        m_isDraggingVolumeSlider = false;
         m_lastVolumeSliderValue = -1f;
     }
 

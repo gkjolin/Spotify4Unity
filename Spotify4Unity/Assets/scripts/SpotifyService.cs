@@ -18,6 +18,18 @@ using System.Threading;
 public sealed class SpotifyService : MonoBehaviour
 {
     /// <summary>
+    /// Your Client ID for your app.
+    /// You must register your application to use the Spotify API online at https://developer.spotify.com/documentation/general/guides/app-settings/#register-your-app
+    /// </summary>
+    [Tooltip("Your Client ID for your app. You must register your application to use the Spotify API online at https://developer.spotify.com/documentation/general/guides/app-settings/#register-your-app")]
+    public string WebAPIClientId = "";
+    /// <summary>
+    /// The port to use when authenticating. Should be the same as your "Redirect URI" in your application's Spotify Dashboard
+    /// </summary>
+    [Tooltip("The port to use when authenticating. Should be the same as your 'Redirect URI(s)' in your application's Spotify Dashboard")]
+    public int ConnectionPort = 8000;
+
+    /// <summary>
     ///Should the control automatically connect to Spotify when not connected?
     /// </summary>
     public bool AutoConnect = false;
@@ -88,7 +100,6 @@ public sealed class SpotifyService : MonoBehaviour
     /// The max number for volume to be set
     /// </summary>
     private const float MAX_VOLUME_AMOUNT = 100f;
-    private const string CLIENT_ID = "26d287105e31491889f3cd293d85bfea";
     /// <summary>
     /// The id for premium on the users profile
     /// </summary>
@@ -114,9 +125,14 @@ public sealed class SpotifyService : MonoBehaviour
     #region MonoBehavious
     private void Awake()
     {
-        if (AutoConnect)
+        if (string.IsNullOrEmpty(WebAPIClientId))
         {
-            bool isConnected = Connect();
+            Analysis.LogError("Won't be able to connect to WebAPI since no 'Client ID' has been set on SpotifyService");
+        }
+
+        if (AutoConnect && !string.IsNullOrEmpty(WebAPIClientId) && ConnectionPort > 0)
+        {
+            bool isConnected = Connect(WebAPIClientId, ConnectionPort);
             if (isConnected)
                 Analysis.Log("Successfully connected to Spotify");
         }
@@ -126,8 +142,9 @@ public sealed class SpotifyService : MonoBehaviour
     /// <summary>
     /// Attempts a connection to a local Spotify Client & WebAPI
     /// </summary>
+    /// <param name="webApiClientId">Your client id for your app</param>
     /// <returns>If the connection was successful or not to either client or WebAPI</returns>
-    public bool Connect()
+    public bool Connect(string webApiClientId, int port = 8000)
     {
         m_spotify = new SpotifyLocalAPI(m_localProxyConfig);
         m_spotify.OnPlayStateChange += OnPlayChangedInternal;
@@ -136,7 +153,7 @@ public sealed class SpotifyService : MonoBehaviour
         m_spotify.OnVolumeChange += OnVolumeChangedInternal;
 
         bool localSpotifySuccessfulConnect = ConnectSpotifyLocal();
-        bool webHelperSuccessfulConnect = ConnectSpotifyWebHelper();
+        bool webHelperSuccessfulConnect = ConnectSpotifyWebHelper(webApiClientId, port);
         if (localSpotifySuccessfulConnect)
         {
             InitializeLocalSpotify();
@@ -189,7 +206,12 @@ public sealed class SpotifyService : MonoBehaviour
         return successful;
     }
 
-    private bool ConnectSpotifyWebHelper()
+    /// <summary>
+    /// Connectes to the WebHelper with your ClientId
+    /// </summary>
+    /// <param name="clientId">Custom client id</param>
+    /// <returns></returns>
+    private bool ConnectSpotifyWebHelper(string clientId, int port = 8000)
     {
         if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
         {
@@ -199,11 +221,11 @@ public sealed class SpotifyService : MonoBehaviour
 
         WebAPIFactory webApiFactory = new WebAPIFactory(
             "http://localhost",
-            8000,
-            CLIENT_ID,
+            port,
+            clientId,
             Scope.UserReadPrivate | Scope.UserReadEmail | Scope.PlaylistReadPrivate | Scope.UserLibraryRead |
             Scope.UserReadPrivate | Scope.UserFollowRead | Scope.UserReadBirthdate | Scope.UserTopRead | Scope.PlaylistReadCollaborative |
-            Scope.UserReadRecentlyPlayed | Scope.UserReadPlaybackState | Scope.UserModifyPlaybackState,
+            Scope.UserReadRecentlyPlayed | Scope.UserReadPlaybackState | Scope.UserModifyPlaybackState | Scope.Streaming,
             m_proxyConfig);
 
         try
