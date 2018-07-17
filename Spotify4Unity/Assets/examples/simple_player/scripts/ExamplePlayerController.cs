@@ -60,6 +60,9 @@ public class ExamplePlayerController : SpotifyUIBase
     private bool m_isDraggingTrackPositionSlider = false;
     private float m_lastTrackPosSliderValue = -1f;
 
+    private bool m_isDraggingVolumeSlider = false;
+    private float m_lastVolumeSliderValue = -1f;
+
     #region MonoBehavious
     protected override void Awake()
     {
@@ -204,7 +207,7 @@ public class ExamplePlayerController : SpotifyUIBase
 
     private void OnSetVolumeChanged(float value)
     {
-        SetVolume(value);
+        m_lastVolumeSliderValue = value;
     }
 
     private void OnUnmuteSound()
@@ -250,6 +253,22 @@ public class ExamplePlayerController : SpotifyUIBase
 
         m_isDraggingTrackPositionSlider = false;
         m_lastTrackPosSliderValue = -1f;
+    }
+
+    public void OnMouseDownVolumeSlider()
+    {
+        m_isDraggingVolumeSlider = true;
+    }
+
+    public void OnMouseUpVolumeSlider()
+    {
+        if (m_lastVolumeSliderValue > 0f)
+        {
+            m_spotifyService.SetVolume(m_lastVolumeSliderValue);
+        }
+
+        m_isDraggingVolumeSlider = false;
+        m_lastVolumeSliderValue = -1f;
     }
 
     private void OnClickShuffle()

@@ -20,9 +20,6 @@ public class ExampleTracksController : SpotifyUIBase
     ScrollRect m_scrollRect;
 
     [SerializeField]
-    float m_yStartPosition = 0f;
-
-    [SerializeField]
     float m_uiSpacing = 0f;
 
     protected override void Awake()

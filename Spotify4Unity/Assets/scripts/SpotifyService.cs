@@ -87,8 +87,16 @@ public sealed class SpotifyService : MonoBehaviour
     /// <summary>
     /// The max number for volume to be set
     /// </summary>
-    const float MAX_VOLUME_AMOUNT = 100f;
-    const string CLIENT_ID = "26d287105e31491889f3cd293d85bfea";
+    private const float MAX_VOLUME_AMOUNT = 100f;
+    private const string CLIENT_ID = "26d287105e31491889f3cd293d85bfea";
+    /// <summary>
+    /// The id for premium on the users profile
+    /// </summary>
+    private const string PREMIUM_ID = "premium";
+    /// <summary>
+    /// The id for a user (non-premium) on the users profile
+    /// </summary>
+    private const string USER_ID = "user";
 
     public SpotifyService()
     {
@@ -160,7 +168,7 @@ public sealed class SpotifyService : MonoBehaviour
     {
         if (!SpotifyLocalAPI.IsSpotifyRunning())
         {
-            Analysis.Log("Local Spotify isn't running!");
+            Analysis.LogError("Local Spotify isn't running!");
             return false;
         }
 
@@ -171,7 +179,7 @@ public sealed class SpotifyService : MonoBehaviour
         }
         catch (Exception e)
         {
-            Analysis.Log($"Unable to connect to Local Spotify - {e}");
+            Analysis.LogError($"Unable to connect to Local Spotify - {e}");
         }
         return successful;
     }
@@ -180,7 +188,7 @@ public sealed class SpotifyService : MonoBehaviour
     {
         if (!SpotifyLocalAPI.IsSpotifyWebHelperRunning())
         {
-            Analysis.Log("SpotifyWebHelper isn't running!");
+            Analysis.LogError("SpotifyWebHelper isn't running!");
             return false;
         }
 
@@ -226,21 +234,24 @@ public sealed class SpotifyService : MonoBehaviour
         Thread t = new Thread(LoadTracks);
         t.Start();
 
-        //Times 100 since GetStatus Volume value is between 0-1
-        m_lastVolumeLevel = (int)m_spotify.GetStatus().Volume * 100;
-
         StatusResponse currentState = m_spotify.GetStatus();
+        //Times 100 since GetStatus Volume value is between 0-1
+        m_lastVolumeLevel = (int)currentState.Volume * 100;
+
         SetShuffleInternal(currentState.Shuffle ? Shuffle.Enabled : Shuffle.Disabled);
-        //ToDo: Check if repeat state is on song, playlist or disabled
+        //ToDo: Check if repeat state is on song, playlist or disabled. Currently only able to know from boolean
         SetRepeatInternal(currentState.Repeat ? Repeat.Playlist : Repeat.Disabled);
 
         LoadUserInformation();
     }
 
+    /// <summary>
+    /// Loads the latest user information about the user
+    /// </summary>
     private void LoadUserInformation()
     {
         PrivateProfile privateProfile = m_webAPI.GetPrivateProfile();
-        IsPremium = privateProfile.Product == "premium";
+        IsPremium = privateProfile.Product == PREMIUM_ID;
 
         string profilePicture = privateProfile.Images.Count > 0 ? privateProfile.Images.FirstOrDefault().Url : null;
         m_userInfo = new UserInfo()

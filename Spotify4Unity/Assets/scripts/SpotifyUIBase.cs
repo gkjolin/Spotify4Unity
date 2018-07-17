@@ -72,6 +72,16 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
+        m_spotifyService.OnPlayStatusChanged -= OnPlayChanged;
+        m_spotifyService.OnTrackChanged -= OnTrackChanged;
+        m_spotifyService.OnTrackTimeChanged -= OnTrackTimeChanged;
+        m_spotifyService.OnVolumeChanged -= OnVolumeChanged;
+        m_spotifyService.OnMuteChanged -= OnMuteChanged;
+        m_spotifyService.OnLoadedSavedTracks -= OnSavedTracksLoaded;
+        m_spotifyService.OnUserInfoLoaded -= OnUserInformationLoaded;
+        m_spotifyService.OnRepeatChanged -= OnRepeatChanged;
+        m_spotifyService.OnShuffleChanged -= OnShuffleChanged;
+
         m_spotifyService.Disconnect();
     }
 

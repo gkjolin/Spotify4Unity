@@ -10,15 +10,13 @@ using UnityEngine.EventSystems;
 public class SliderToController : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     [SerializeField]
-    ExamplePlayerController m_controller;
+    protected ExamplePlayerController m_controller;
 
-    public void OnPointerDown(PointerEventData eventData)
+    public virtual void OnPointerDown(PointerEventData eventData)
     {
-        m_controller.OnMouseDownTrackTimeSlider();
     }
 
-    public void OnPointerUp(PointerEventData eventData)
+    public virtual void OnPointerUp(PointerEventData eventData)
     {
-        m_controller.OnMouseUpTrackTimeSlider();
     }
 }
