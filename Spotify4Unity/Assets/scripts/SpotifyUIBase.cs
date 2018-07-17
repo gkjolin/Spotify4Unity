@@ -175,9 +175,13 @@ public class SpotifyUIBase : MonoBehaviour
         yield return imageArtWWW;
 
         Sprite s = null;
-        if(imageArtWWW != null)
+        if(imageArtWWW != null && imageArtWWW.texture != null)
         {
             s = Sprite.Create(imageArtWWW.texture, new Rect(0, 0, imageArtWWW.texture.width, imageArtWWW.texture.height), new Vector2(0, 0));
+        }
+        else
+        {
+            Analysis.LogError($"Unable to load image from url '{url}'");
         }
         onLoaded.Invoke(s);
     }
@@ -185,7 +189,8 @@ public class SpotifyUIBase : MonoBehaviour
     private void LoadAlbumArt(Track t, Track.Resolution resolution = Track.Resolution.Small)
     {
         string url = t.GetAlbumArtUrl(resolution);
-        StartCoroutine(LoadImageFromUrl(url, sprite => OnAlbumArtLoaded(sprite)));
+        if(!string.IsNullOrEmpty(url))
+            StartCoroutine(LoadImageFromUrl(url, sprite => OnAlbumArtLoaded(sprite)));
     }
 
     private void OnVolumeChanged(VolumeInfo info)
@@ -256,7 +261,8 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void OnUserInformationLoaded(UserInfoLoaded e)
     {
-        StartCoroutine(LoadImageFromUrl(e.Info.ProfilePictureURL, sprite => OnUserProfilePictureLoaded(sprite)));
+        if(!string.IsNullOrEmpty(e.Info.ProfilePictureURL))
+            StartCoroutine(LoadImageFromUrl(e.Info.ProfilePictureURL, sprite => OnUserProfilePictureLoaded(sprite)));
     }
 
     protected virtual void OnUserProfilePictureLoaded(Sprite s)

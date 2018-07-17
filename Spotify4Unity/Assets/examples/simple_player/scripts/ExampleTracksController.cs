@@ -65,8 +65,12 @@ public class ExampleTracksController : SpotifyUIBase
             GameObject instPrefab = Instantiate(m_trackListPrefab);
             instPrefab.transform.SetParent(m_listParent);
             //Populate children of prefab with information
-            instPrefab.transform.Find("Track").GetComponent<Text>().text = $"{track.Title} - {track.Artist} - {track.Album}";
+            SetChildText(instPrefab, "Title", track.Title);
+            SetChildText(instPrefab, "Artist", track.Artist);
+            SetChildText(instPrefab, "Album", track.Album);
+            //Add listener to play button
             instPrefab.transform.Find("PlayBtn").GetComponent<Button>().onClick.AddListener(() => OnPlayTrack(track));
+
             //Set Y position of instantiated prefab
             RectTransform rect = instPrefab.GetComponent<RectTransform>();
             rect.localPosition = new Vector3(rect.rect.width, yPos, -rect.rect.width);
@@ -86,6 +90,11 @@ public class ExampleTracksController : SpotifyUIBase
         m_resizeCanvas.localPosition = new Vector3(m_resizeCanvas.localPosition.x, -(m_resizeCanvas.rect.height / 2), m_resizeCanvas.localPosition.z);
         //Set sensitivity to scroll 1 track every scroll wheel click
         m_scrollRect.scrollSensitivity = m_trackListPrefab.GetComponent<RectTransform>().rect.height;
+    }
+
+    private void SetChildText(GameObject parent, string childName, string content)
+    {
+        parent.transform.Find(childName).GetComponent<Text>().text = content;
     }
 
     private void OnPlayTrack(Track t)
