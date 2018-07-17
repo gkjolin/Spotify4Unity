@@ -37,7 +37,10 @@ public class Track
     /// URl of the song
     /// </summary>
     public string ShareURL { get; set; }
-    public string InternalUri { get; set; }
+
+    public string TrackUri { get; set; }
+    public string AlbumUri { get; set; }
+    public string ArtistUri { get; set; }
 
     /// <summary>
     /// Total time in seconds the song is
@@ -55,13 +58,24 @@ public class Track
     {
         m_originalTrack = t;
 
-        Artist = t.ArtistResource.Name;
-        Title = t.TrackResource.Name;
-        Album = t.AlbumResource.Name;
-        ShareURL = t.TrackResource.Location.Og;
+        if (t.TrackResource != null)
+        {
+            Title = t.TrackResource.Name;
+            ShareURL = t.TrackResource.Location.Og;
+            TrackUri = t.TrackResource.Uri;
+        }
+        if (t.ArtistResource != null)
+        {
+            Artist = t.ArtistResource.Name;
+            ArtistUri = t.ArtistResource.Uri;
+        }
+        if (t.AlbumResource != null)
+        {
+            Album = t.AlbumResource.Name;
+            AlbumUri = t.AlbumResource.Uri;
+        }
 
         TotalTime = t.Length;
-        InternalUri = t.TrackResource.Uri;
     }
 
     public string GetAlbumArtUrl(Resolution resolution)

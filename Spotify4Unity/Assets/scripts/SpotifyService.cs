@@ -159,9 +159,14 @@ public sealed class SpotifyService : MonoBehaviour
     /// Plays a song in Spotify from it's URI
     /// </summary>
     /// <param name="songUri">The URI of the song</param>
-    public void PlaySong(string songUri)
+    /// <param name="contextUri">The context to play the song within. For example, the Artist Uri or Album Uri. Leave blank to just play the one song</param>
+    public void PlaySong(string songUri, string contextUri = "")
     {
-        m_spotify.PlayURL(songUri);
+        m_spotify.PlayURL(songUri, contextUri);
+
+        //Force event since LocalAPI doesn't always call "OnTrackChange" event for setting our own song
+        StatusResponse status = m_spotify.GetStatus();
+        SetTrack(status?.Track);
     }
 
     private bool ConnectSpotifyLocal()
@@ -364,9 +369,15 @@ public sealed class SpotifyService : MonoBehaviour
             return;
 
         if (isMuted)
+        {
             m_webAPI.SetVolume(0);
+            Analysis.Log($"Muted volume");
+        }
         else
+        {
             m_webAPI.SetVolume(m_lastVolumeLevel);
+            Analysis.Log($"Unmuted volume & set to '{m_lastVolumeLevel}'");
+        }
 
         IsMuted = isMuted;
         OnMuteChanged?.Invoke(isMuted);
@@ -398,7 +409,7 @@ public sealed class SpotifyService : MonoBehaviour
     {
         //Requires an encoded # inbetween URI and minutes & seconds
         string hash = "%23";
-        PlaySong(CurrentTrack.InternalUri + $"{hash}{minutes}:{seconds}");
+        PlaySong(CurrentTrack.TrackUri + $"{hash}{minutes}:{seconds}");
 
         Analysis.Log($"Set '{CurrentTrack.Artist} - {CurrentTrack.Title}' position to {minutes}:{seconds}");
     }
@@ -470,6 +481,9 @@ public sealed class SpotifyService : MonoBehaviour
 
     private void SetTrack(SpotifyAPI.Local.Models.Track t)
     {
+        if (t == null)
+            return;
+
         CurrentTrack = new Track(t);
         OnTrackChanged?.Invoke(CurrentTrack);
 
@@ -507,6 +521,9 @@ public sealed class SpotifyService : MonoBehaviour
 
     private void OnTrackChangedInternal(object sender, TrackChangeEventArgs e)
     {
+        if (CurrentTrack.TrackUri == e.NewTrack.TrackResource.Uri)
+            return;
+
         SetTrack(e.NewTrack);
     }
 
@@ -570,7 +587,7 @@ public sealed class SpotifyService : MonoBehaviour
                 Artist = arists,
                 Album = t.Album.Name,
                 ShareURL = t.PreviewUrl,
-                InternalUri = t.Uri,
+                TrackUri = t.Uri,
                 TotalTime = t.DurationMs / 1000,
             });
         }
