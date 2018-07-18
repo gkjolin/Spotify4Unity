@@ -36,30 +36,36 @@ public sealed class SpotifyService : MonoBehaviour
     /// <summary>
     /// Is Spotify currently playing music?
     /// </summary>
+    [HideInInspector]
     public bool IsPlaying = false;
     /// <summary>
     /// Are we connected to Spotify and able to control it
     /// </summary>
+    [HideInInspector]
     public bool IsConnected = false;
     /// <summary>
     /// Is the sounds from Spotify muted
     /// </summary>
+    [HideInInspector]
     public bool IsMuted = false;
     /// <summary>
     /// Is the user currently paying for Spotify Premium
     /// </summary>
+    [HideInInspector]
     public bool IsPremium = false;
     /// <summary>
     /// All tracks saved to the users Spotify library
     /// </summary>
-    public List<Track> SavedTracks = new List<Track>();
+    public List<Track> SavedTracks = null;
     /// <summary>
     /// The current state of shuffle
     /// </summary>
+    [HideInInspector]
     public Shuffle ShuffleState = Shuffle.Disabled;
     /// <summary>
     /// Current state of repeat
     /// </summary>
+    [HideInInspector]
     public Repeat RepeatState = Repeat.Disabled;
 
     /// <summary>
@@ -69,6 +75,7 @@ public sealed class SpotifyService : MonoBehaviour
     /// <summary>
     /// The current position in seconds the track has played
     /// </summary>
+    [HideInInspector]
     public float CurrentTrackTime = 0f;
     /// <summary>
     /// The current volume levels

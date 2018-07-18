@@ -128,7 +128,6 @@ public class ExampleTracksController : SpotifyUIBase
     private void OnPlayTrack(Track t)
     {
         m_spotifyService.PlaySong(t.TrackUri, t.AlbumUri);
-        //Analysis.Log($"Playing song '{t.Title} - {t.Artist} - {t.Album}'");
     }
 
     private void DestroyChildren(Transform parent)
