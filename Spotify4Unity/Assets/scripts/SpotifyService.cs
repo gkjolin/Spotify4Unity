@@ -250,7 +250,7 @@ public sealed class SpotifyService : MonoBehaviour
         SetVolumeInternal(new VolumeInfo()
         {
             //Times 100 since GetStatus Volume value is between 0-1
-            CurrentVolume = (float)status.Volume * 100,
+            CurrentVolume = (float)status.Volume * 100f,
             MaxVolume = MAX_VOLUME_AMOUNT,
         });
         SetMuted(status.Volume == 0.0);
@@ -263,7 +263,7 @@ public sealed class SpotifyService : MonoBehaviour
 
         StatusResponse currentState = m_spotify.GetStatus();
         //Times 100 since GetStatus Volume value is between 0-1
-        m_lastVolumeLevel = (int)currentState.Volume * 100;
+        m_lastVolumeLevel = (int)(currentState.Volume * 100);
 
         SetShuffleInternal(currentState.Shuffle ? Shuffle.Enabled : Shuffle.Disabled);
         //ToDo: Check if repeat state is on song, playlist or disabled. Currently only able to know from boolean

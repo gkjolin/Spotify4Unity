@@ -62,7 +62,7 @@ public class SpotifyUIBase : MonoBehaviour
     {
     }
 
-    private void OnApplicationFocus(bool focus)
+    protected virtual void OnApplicationFocus(bool focus)
     {
         if (focus)
         {
@@ -277,7 +277,6 @@ public class SpotifyUIBase : MonoBehaviour
 
     protected virtual void OnUserProfilePictureLoaded(Sprite s)
     {
-
     }
 
     protected virtual void OnShuffleChanged(ShuffleChanged e)
