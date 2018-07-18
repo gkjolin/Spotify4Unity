@@ -10,8 +10,6 @@ public class SpotifyUIBase : MonoBehaviour
     /// </summary>
     protected Track.Resolution m_albumArtResolution = Track.Resolution.Small;
 
-    protected List<Track> m_savedTracks = null;
-
     [SerializeField, Tooltip("The game object that hosts the constant Spotify Service. Will be found if in scene and not specified here")]
     protected SpotifyService m_spotifyService = null;
     protected EventManager m_eventManager = null;

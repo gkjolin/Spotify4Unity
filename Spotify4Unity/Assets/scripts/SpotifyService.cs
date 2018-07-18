@@ -244,30 +244,35 @@ public sealed class SpotifyService : MonoBehaviour
     {
         m_spotify.ListenForEvents = true;
 
-        StatusResponse status = m_spotify.GetStatus();
-        SetTrack(status.Track);
-        SetPlaying(status.Playing);
+        StatusResponse currentStatus = m_spotify.GetStatus();
+        SetTrack(currentStatus.Track);
+        SetPlaying(currentStatus.Playing);
+
+        float currentVolume = (float)currentStatus.Volume * 100f;
         SetVolumeInternal(new VolumeInfo()
         {
             //Times 100 since GetStatus Volume value is between 0-1
-            CurrentVolume = (float)status.Volume * 100f,
+            CurrentVolume = currentVolume,
             MaxVolume = MAX_VOLUME_AMOUNT,
         });
-        SetMuted(status.Volume == 0.0);
+
+        //Times 100 since GetStatus Volume value is between 0-1
+        m_lastVolumeLevel = (int)currentVolume;
+        //If Spotify is muted on start, then when Unmute is called, set to 50 volume
+        if (m_lastVolumeLevel == 0)
+            m_lastVolumeLevel = 50;
+
+        SetMute(m_lastVolumeLevel == 0);
+
+        SetShuffleInternal(currentStatus.Shuffle ? Shuffle.Enabled : Shuffle.Disabled);
+        //ToDo: Check if repeat state is on song, playlist or disabled. Currently only able to know from boolean
+        SetRepeatInternal(currentStatus.Repeat ? Repeat.Playlist : Repeat.Disabled);
     }
 
     private void InitalizeWebHelper()
     {
         Thread t = new Thread(LoadTracks);
         t.Start();
-
-        StatusResponse currentState = m_spotify.GetStatus();
-        //Times 100 since GetStatus Volume value is between 0-1
-        m_lastVolumeLevel = (int)(currentState.Volume * 100);
-
-        SetShuffleInternal(currentState.Shuffle ? Shuffle.Enabled : Shuffle.Disabled);
-        //ToDo: Check if repeat state is on song, playlist or disabled. Currently only able to know from boolean
-        SetRepeatInternal(currentState.Repeat ? Repeat.Playlist : Repeat.Disabled);
 
         LoadUserInformation();
     }
@@ -439,6 +444,7 @@ public sealed class SpotifyService : MonoBehaviour
     public void NextSong()
     {
         m_spotify.Skip();
+
         Analysis.Log($"Playing next song '{CurrentTrack.Artist} - {CurrentTrack.Title}'");
     }
 
@@ -614,6 +620,7 @@ public sealed class SpotifyService : MonoBehaviour
             });
         }
 
+        SavedTracks = tracks;
         return tracks;
     }
 
@@ -624,7 +631,12 @@ public sealed class SpotifyService : MonoBehaviour
     /// <returns>The list of saved tracks sorted by the order</returns>
     public List<Track> GetSavedTracksSorted(Sort sortType)
     {
-        List<Track> allSavedTracks = GetSavedTracks();
+        List<Track> allSavedTracks = null;
+        if (SavedTracks != null)
+            allSavedTracks = SavedTracks;
+        else
+            allSavedTracks = GetSavedTracks();
+
         switch (sortType)
         {
             case Sort.Title:

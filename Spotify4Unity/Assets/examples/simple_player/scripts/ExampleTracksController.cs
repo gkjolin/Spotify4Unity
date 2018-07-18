@@ -22,6 +22,20 @@ public class ExampleTracksController : SpotifyUIBase
     [SerializeField]
     float m_uiSpacing = 0f;
 
+    [SerializeField]
+    Button m_sortByTitleBtn;
+
+    [SerializeField]
+    Button m_sortByArtistBtn;
+
+    [SerializeField]
+    Button m_sortByAlbumBtn;
+
+    private Sort m_currentSort = Sort.Unsorted;
+    private bool m_isSortInverted = false;
+
+    private List<Track> m_tracks = null;
+
     protected override void Awake()
     {
         base.Awake();
@@ -31,7 +45,23 @@ public class ExampleTracksController : SpotifyUIBase
     {
         base.Start();
 
-        if(m_listParent != null)
+        if (m_sortByTitleBtn != null)
+        {
+            m_sortByTitleBtn.onClick.AddListener(OnSortByTitle);
+            m_sortByTitleBtn.transform.Find("Icon").gameObject.SetActive(false);
+        }
+        if (m_sortByArtistBtn != null)
+        {
+            m_sortByArtistBtn.onClick.AddListener(OnSortByArtist);
+            m_sortByArtistBtn.transform.Find("Icon").gameObject.SetActive(false);
+        }
+        if (m_sortByAlbumBtn != null)
+        {
+            m_sortByAlbumBtn.onClick.AddListener(OnSortByAlbum);
+            m_sortByAlbumBtn.transform.Find("Icon").gameObject.SetActive(false);
+        }
+
+        if (m_listParent != null)
             DestroyChildren(m_listParent);
 
         m_scrollRect.movementType = ScrollRect.MovementType.Clamped;
@@ -52,12 +82,13 @@ public class ExampleTracksController : SpotifyUIBase
             return;
         }
 
-        if (m_savedTracks == null || m_savedTracks != null && m_savedTracks.Count == 0)
+        
+        if (m_tracks == null || m_tracks != null && m_tracks.Count == 0)
             return;
 
         float yPos = m_resizeCanvas.GetComponent<RectTransform>().rect.height / 2;
         float newCanvasHeight = 0f;
-        foreach (Track track in m_savedTracks)
+        foreach (Track track in m_tracks)
         {
             GameObject instPrefab = Instantiate(m_trackListPrefab);
             instPrefab.transform.SetParent(m_listParent);
@@ -117,7 +148,71 @@ public class ExampleTracksController : SpotifyUIBase
     {
         base.OnSavedTracksLoaded(e);
 
-        m_savedTracks = e.SavedTracks;
+        m_tracks = e.SavedTracks;
         UpdateUI();
+    }
+
+    public void OnSortByTitle()
+    {
+        DisableAll();
+        GenericSort(Sort.Title, m_sortByTitleBtn);
+    }
+
+    public void OnSortByArtist()
+    {
+        DisableAll();
+        GenericSort(Sort.Artist, m_sortByArtistBtn);
+    }
+
+    public void OnSortByAlbum()
+    {
+        DisableAll();
+        GenericSort(Sort.Album, m_sortByAlbumBtn);
+    }
+
+    private void GenericSort(Sort sortByMode, Button btn)
+    {
+        if (m_currentSort == sortByMode)
+        {
+            if (m_isSortInverted)
+            {
+                //Is inverted & sorted, not restore to unsorted
+                m_currentSort = Sort.Unsorted;
+                m_isSortInverted = false;
+                m_tracks = m_spotifyService.SavedTracks;
+
+                btn.transform.Find("Icon").gameObject.SetActive(false);
+            }
+            else
+            {
+                //Is sorted but not inverted
+                m_tracks.Reverse();
+                m_isSortInverted = true;
+
+                btn.transform.Find("Icon").gameObject.SetActive(true);
+                btn.transform.Find("Icon").transform.localRotation = Quaternion.Euler(180, 0, 0);
+            }
+        }
+        else
+        {
+            if (m_isSortInverted)
+                m_isSortInverted = false;
+
+            //Is unsorted, sort list
+            m_tracks = m_spotifyService.GetSavedTracksSorted(sortByMode);
+            m_currentSort = sortByMode;
+
+            btn.transform.Find("Icon").gameObject.SetActive(true);
+            btn.transform.Find("Icon").transform.localRotation = Quaternion.Euler(0, 0, 0);
+        }
+
+        UpdateUI();
+    }
+
+    private void DisableAll()
+    {
+        m_sortByTitleBtn.transform.Find("Icon").gameObject.SetActive(false);
+        m_sortByArtistBtn.transform.Find("Icon").gameObject.SetActive(false);
+        m_sortByAlbumBtn.transform.Find("Icon").gameObject.SetActive(false);
     }
 }
