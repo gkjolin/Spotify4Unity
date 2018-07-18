@@ -183,7 +183,7 @@ public sealed class SpotifyService : MonoBehaviour
     /// Plays a song in Spotify from it's URI
     /// </summary>
     /// <param name="songUri">The URI of the song</param>
-    /// <param name="contextUri">The context to play the song within. For example, the Artist Uri or Album Uri. Leave blank to just play the one song</param>
+    /// <param name="contextUri">The context to play the song within. For example, the Artist Uri or Album Uri. Leave blank to just play one song</param>
     public void PlaySong(string songUri, string contextUri = "")
     {
         m_spotify.PlayURL(songUri, contextUri);
@@ -616,14 +616,18 @@ public sealed class SpotifyService : MonoBehaviour
         foreach (FullTrack t in list)
         {
             string arists = String.Join(", ", t.Artists.Select(x => x.Name));
+            string artistsUri = t.Artists.Count > 0 ? t.Artists.FirstOrDefault().Uri : null;
             tracks.Add(new Track()
             {
                 Title = t.Name,
                 Artist = arists,
                 Album = t.Album.Name,
-                ShareURL = t.PreviewUrl,
-                TrackUri = t.Uri,
+                TrackURL = t.ExternUrls["spotify"],
                 TotalTime = t.DurationMs / 1000,
+
+                TrackUri = t.Uri,
+                AlbumUri = t.Album.Uri,
+                ArtistUri = artistsUri,
             });
         }
 

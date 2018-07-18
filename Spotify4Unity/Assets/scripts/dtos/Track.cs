@@ -34,12 +34,21 @@ public class Track
     /// </summary>
     public string Album { get; set; }
     /// <summary>
-    /// URl of the song
+    /// Url of the song
     /// </summary>
-    public string ShareURL { get; set; }
+    public string TrackURL { get; set; }
 
+    /// <summary>
+    /// The URI of the track
+    /// </summary>
     public string TrackUri { get; set; }
+    /// <summary>
+    /// The URI of the album
+    /// </summary>
     public string AlbumUri { get; set; }
+    /// <summary>
+    /// The URI of the artist
+    /// </summary>
     public string ArtistUri { get; set; }
 
     /// <summary>
@@ -61,7 +70,7 @@ public class Track
         if (t.TrackResource != null)
         {
             Title = t.TrackResource.Name;
-            ShareURL = t.TrackResource.Location.Og;
+            TrackURL = t.TrackResource.Location.Og;
             TrackUri = t.TrackResource.Uri;
         }
         if (t.ArtistResource != null)
