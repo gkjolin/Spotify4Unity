@@ -1,12 +1,15 @@
 # Spotify4Unity
 
-
-
 Spotify4Unity is a plugin which helps you integrate Spotify connectivity into you Unity game/application easily, allowing users to use basic track control functionality to viewing their whole library. This plugin relies heavily on JohnnyCrazy's [SpotifyAPI-NET](https://github.com/JohnnyCrazy/SpotifyAPI-NET)
 
 Check out more and the documentation [on the Wiki](https://github.com/JoshLmao/Spotify4Unity/wiki)
 
 ![Spotify4Unity Demo Video](repository_assets/demo.gif)
+
+## Requirements
+
+1. Unity 2018.2.0f2
+2. Scripting Runtime Version: .NET 4.6
 
 ## Quick Start
 
