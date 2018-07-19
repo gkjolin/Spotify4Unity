@@ -8,7 +8,7 @@ Check out more and the documentation [on the Wiki](https://github.com/JoshLmao/S
 
 ## Requirements
 
-1. Unity 2018.2.0f2
+1. Unity 2018.2.0f2 or above
 2. Scripting Runtime Version: .NET 4.6
 
 ## Quick Start
